@@ -524,14 +524,336 @@ button { cursor: pointer; }
 }
 .cmd-item:hover, .cmd-item.hl { background: var(--surface-2); }
 .cmd-item .hint { margin-left: auto; font-size: 11px; color: var(--text-3); }
+/* ===== Mobile shell (hidden on desktop) ===== */
+.m-shell { display: none; }
+.m-dock { display: none; }
+.m-sheet-root { display: none; }
+.issues-cards { display: none; }
+.linear-pills { display: none; }
+
+/* ===== Bottom sheet (shared) ===== */
+.m-sheet-root {
+  position: fixed; inset: 0; z-index: 80;
+  pointer-events: none;
+}
+.m-sheet-root.open { display: block; pointer-events: auto; }
+.m-sheet-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.48);
+  opacity: 0; transition: opacity .2s ease;
+}
+.m-sheet-root.open .m-sheet-backdrop { opacity: 1; }
+.m-sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  max-height: min(88dvh, 720px);
+  background: var(--surface);
+  border-radius: 14px 14px 0 0;
+  border: 1px solid var(--border-strong);
+  border-bottom: 0;
+  box-shadow: 0 -16px 48px rgba(0,0,0,0.45);
+  display: flex; flex-direction: column;
+  transform: translateY(110%);
+  transition: transform .28s cubic-bezier(.2,.8,.2,1);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.m-sheet-root.open .m-sheet { transform: translateY(0); }
+.m-sheet-handle {
+  width: 36px; height: 4px; border-radius: 999px;
+  background: var(--border-strong); margin: 10px auto 4px; flex-shrink: 0;
+}
+.m-sheet-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; padding: 4px 16px 12px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.m-sheet-head h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.02em; }
+.m-sheet-head .sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.m-sheet-body { flex: 1; overflow: auto; padding: 14px 16px 20px; -webkit-overflow-scrolling: touch; }
+.m-sheet .close-x { width: 44px; height: 44px; font-size: 20px; flex-shrink: 0; }
+
+.m-member {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; text-align: left;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface-2); padding: 12px;
+  margin-bottom: 8px; min-height: 56px;
+}
+.m-member:hover, .m-member:active { border-color: var(--border-strong); }
+.m-member.is-blocked { border-color: rgba(220,38,38,0.5); background: rgba(220,38,38,0.06); }
+.m-member img {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--border); background: var(--surface-3); flex-shrink: 0;
+}
+.m-member .meta { flex: 1; min-width: 0; }
+.m-member .name { font-size: 14px; font-weight: 600; }
+.m-member .task { font-size: 12px; color: var(--text-3); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-member .st-pill {
+  flex-shrink: 0; font-size: 11px; font-weight: 650;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 8px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.m-member .st-pill i { width: 6px; height: 6px; border-radius: 50%; }
+
+.m-task {
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); padding: 12px; margin-bottom: 10px;
+}
+.m-task.is-blocked { border-color: rgba(220,38,38,0.45); }
+.m-task .t-title { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+.m-task .t-meta { font-size: 11.5px; color: var(--text-3); margin-bottom: 10px; }
+.m-task .br {
+  font-size: 12px; color: #fecaca; background: rgba(220,38,38,0.12);
+  border: 1px solid rgba(220,38,38,0.35); border-radius: 6px;
+  padding: 8px 10px; margin-bottom: 10px;
+}
+.status-chips {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.status-chips button {
+  min-height: 44px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text-2); font-size: 12.5px; font-weight: 550;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.status-chips button i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.status-chips button.active {
+  color: var(--text); border-color: var(--border-strong);
+  background: var(--surface-3); box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+}
+.status-chips button[data-st="blocked"].active {
+  border-color: rgba(220,38,38,0.55); background: rgba(220,38,38,0.12); color: #fecaca;
+}
+.status-chips button[data-st="doing"].active {
+  border-color: rgba(37,99,235,0.5); background: rgba(37,99,235,0.12); color: #93c5fd;
+}
+.status-chips button[data-st="done"].active {
+  border-color: rgba(22,163,74,0.45); background: rgba(22,163,74,0.1); color: #86efac;
+}
+.blocked-reason-input {
+  width: 100%; margin-top: 8px; min-height: 44px;
+  border-radius: 8px; border: 1px solid rgba(220,38,38,0.4);
+  background: var(--bg); color: var(--text); padding: 10px 12px;
+  font-size: 13px; outline: none; display: none;
+}
+.blocked-reason-input.show { display: block; }
+
+.issue-card {
+  width: 100%; text-align: left;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); padding: 14px; margin-bottom: 8px;
+  min-height: 56px;
+}
+.issue-card.is-blocked { border-color: rgba(220,38,38,0.5); }
+.issue-card .ic-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.issue-card .ic-title { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.issue-card .ic-meta { font-size: 12px; color: var(--text-3); margin-top: 6px; }
+.issue-card .ic-br { font-size: 12px; color: #fecaca; margin-top: 6px; }
+
+/* ===== ≤900 tablet-ish desktop shell tweaks ===== */
 @media (max-width: 900px) {
   .linear-detail { position: absolute; right: 0; top: 0; bottom: 0; z-index: 30; width: min(100%, 360px); }
   .linear-side { width: 200px; }
+  .nav-secondary { display: none; }
+  .search-btn .kbd { display: none; }
 }
+
+/* ===== ≤720 tablet: Linear list-first, side → pills ===== */
 @media (max-width: 720px) {
   .top-meta { display: none; }
+  .filter-chips { display: none; }
   .linear-side { display: none; }
-  .nav-secondary { display: none; }
+  .linear-pills {
+    display: flex; gap: 6px; overflow-x: auto; flex-wrap: nowrap;
+    padding: 10px 12px 0; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .linear-pills::-webkit-scrollbar { display: none; }
+  .linear-pills button {
+    flex: 0 0 auto; min-height: 36px; padding: 0 12px;
+    border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-2);
+    font-size: 12px; font-weight: 550; white-space: nowrap;
+  }
+  .linear-pills button.active {
+    background: var(--surface-3); color: var(--text); border-color: var(--border-strong);
+  }
+  .linear-pills button.has-blocked { border-color: rgba(220,38,38,0.5); color: #fca5a5; }
+  .issues-table { display: none; }
+  .issues-cards { display: block; padding: 8px 12px 24px; }
+  .linear-toolbar { flex-wrap: wrap; gap: 8px; }
+  .status-seg { width: 100%; overflow-x: auto; }
+  .office-hud { max-width: calc(100% - 24px); }
+  .proj-pills { max-width: 100%; }
+  .drawer { width: min(100%, 400px); }
+}
+
+/* ===== ≤430 phone shell: project scan home ===== */
+@media (max-width: 430px) {
+  html, body { overflow: hidden; }
+  .app { height: 100dvh; }
+  /* Hide desktop chrome; phone uses m-shell + m-dock */
+  .topbar { display: none !important; }
+  .views { display: none !important; }
+  .m-shell {
+    display: flex; flex-direction: column;
+    flex: 1; min-height: 0; overflow: hidden;
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg);
+    position: relative; z-index: 40;
+  }
+  .m-dock {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding: 0 4px env(safe-area-inset-bottom, 0px);
+    background: rgba(17,17,19,0.96);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .m-dock button {
+    flex: 1; border: 0; background: transparent;
+    color: var(--text-3); font-size: 10.5px; font-weight: 550;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; min-height: 44px; border-radius: 8px; margin: 4px 2px;
+  }
+  .m-dock button svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.75; }
+  .m-dock button.active { color: var(--text); background: var(--surface-2); }
+  .m-panel { display: none; flex: 1; min-height: 0; flex-direction: column; overflow: hidden; background: var(--bg); }
+  .m-panel.active { display: flex; }
+
+  .m-top {
+    flex-shrink: 0; padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .m-brand { display: flex; align-items: center; gap: 10px; }
+  .m-brand .mark {
+    width: 32px; height: 32px; border-radius: 7px;
+    background: var(--surface-3); border: 1px solid var(--border-strong);
+    display: grid; place-items: center; font-size: 10px; font-weight: 700;
+  }
+  .m-brand h1 { font-size: 16px; font-weight: 650; letter-spacing: -0.02em; }
+  .m-brand p { font-size: 11.5px; color: var(--text-3); margin-top: 1px; }
+  .m-summary {
+    margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px 14px;
+    font-size: 12px; color: var(--text-2); font-weight: 500;
+  }
+  .m-summary .blk { color: #f87171; font-weight: 650; }
+  .m-legend {
+    display: flex; flex-wrap: wrap; gap: 10px 14px;
+    padding: 10px 16px 4px; font-size: 11px; color: var(--text-3);
+  }
+  .m-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .m-legend i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+  .m-scroll {
+    flex: 1; overflow: auto; padding: 8px 12px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .m-sec {
+    font-size: 11px; font-weight: 600; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 8px 4px 8px;
+  }
+  .m-proj {
+    width: 100%; text-align: left;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 14px;
+    margin-bottom: 8px; min-height: 72px;
+  }
+  .m-proj:active { background: var(--surface-2); }
+  .m-proj.has-blocked { border-color: rgba(220,38,38,0.55); }
+  .m-proj.active {
+    border-color: var(--border-strong); background: var(--surface-2);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .m-proj.has-blocked.active {
+    background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.6);
+  }
+  .m-proj .row1 {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .m-proj .short { font-size: 15px; font-weight: 650; letter-spacing: -0.02em; }
+  .m-proj .badge-plat {
+    font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+    background: rgba(22,163,74,0.12); color: #4ade80; border: 1px solid rgba(22,163,74,0.28);
+  }
+  .m-proj .full { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
+  .m-proj .counts {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;
+    font-size: 12px; color: var(--text-2); font-weight: 500;
+  }
+  .m-proj .counts span { display: inline-flex; align-items: center; gap: 5px; }
+  .m-proj .counts i { width: 6px; height: 6px; border-radius: 50%; }
+  .m-proj .counts .b { color: #f87171; font-weight: 650; }
+
+  /* Phone Linear panel */
+  .m-linear-toolbar {
+    flex-shrink: 0; padding: 12px 12px 8px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .m-linear-toolbar h2 { font-size: 16px; font-weight: 650; }
+  .m-status-row {
+    display: flex; gap: 6px; overflow-x: auto; margin-top: 10px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .m-status-row::-webkit-scrollbar { display: none; }
+  .m-status-row button {
+    flex: 0 0 auto; min-height: 36px; padding: 0 12px;
+    border-radius: 999px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text-3); font-size: 12px; font-weight: 550;
+  }
+  .m-status-row button.active {
+    background: var(--surface-3); color: var(--text); border-color: var(--border-strong);
+  }
+  .m-proj-pills {
+    display: flex; gap: 6px; overflow-x: auto; padding: 10px 12px 0;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .m-proj-pills::-webkit-scrollbar { display: none; }
+  .m-proj-pills button {
+    flex: 0 0 auto; min-height: 34px; padding: 0 11px;
+    border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text-2); font-size: 12px; font-weight: 550;
+  }
+  .m-proj-pills button.active { background: var(--surface-3); color: var(--text); border-color: var(--border-strong); }
+  .m-proj-pills button.has-blocked { border-color: rgba(220,38,38,0.5); }
+
+  /* Phone Office = simplified agent list (secondary) */
+  .m-office-hint {
+    margin: 12px; padding: 12px 14px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 12.5px; color: var(--text-2); line-height: 1.5;
+  }
+  .m-agent {
+    display: flex; align-items: center; gap: 12px;
+    width: 100%; text-align: left;
+    border: 1px solid var(--border); border-radius: 12px;
+    background: var(--surface); padding: 12px 14px;
+    margin: 0 12px 8px; width: calc(100% - 24px); min-height: 64px;
+  }
+  .m-agent.is-blocked { border-color: rgba(220,38,38,0.5); }
+  .m-agent img {
+    width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+    border: 1px solid var(--border); background: var(--surface-3);
+  }
+  .m-agent .name { font-size: 14px; font-weight: 600; }
+  .m-agent .role { font-size: 11.5px; color: var(--text-3); }
+  .m-agent .task { font-size: 12px; color: var(--text-2); margin-top: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+
+  .m-sheet-root { display: block; }
+  .m-sheet-root:not(.open) { pointer-events: none; visibility: hidden; }
+  .m-sheet-root.open { visibility: visible; }
+}
+
+/* Desktop >900 keeps full shell; ensure m-* never shows */
+@media (min-width: 431px) {
+  .m-shell, .m-dock { display: none !important; }
+}
+@media (min-width: 901px) {
+  .linear-pills, .issues-cards { display: none !important; }
+  .issues-table { display: table; }
 }
 </style>
 </head>
@@ -604,6 +926,7 @@ button { cursor: pointer; }
         <div class="proj-list" id="projList"></div>
       </aside>
       <div class="linear-main">
+        <div class="linear-pills" id="linearPills" aria-label="專案快篩（平板）"></div>
         <div class="issues-panel active" id="panelIssues">
           <div class="linear-toolbar">
             <h2>Issues</h2>
@@ -630,6 +953,7 @@ button { cursor: pointer; }
               </thead>
               <tbody id="issuesBody"></tbody>
             </table>
+            <div class="issues-cards" id="issuesCards"></div>
             <div class="empty-state" id="issuesEmpty" style="display:none">此篩選下沒有 Issue</div>
           </div>
         </div>
@@ -672,6 +996,116 @@ button { cursor: pointer; }
       </div>
       <button type="button" class="icon-btn" id="backFromSettings" style="margin-top:8px">← 回 Office</button>
     </section>
+  </div>
+
+  <!-- Phone shell ≤430: project scan home -->
+  <div class="m-shell" id="mShell" aria-label="手機專案掃讀">
+    <div class="m-panel active" id="mPanelProjects" data-mpanel="projects">
+      <div class="m-top">
+        <div class="m-brand">
+          <div class="mark">HQ</div>
+          <div>
+            <h1>Team HQ</h1>
+            <p>AI 員工管理台</p>
+          </div>
+        </div>
+        <div class="m-summary" id="mSummary"></div>
+      </div>
+      <div class="m-legend" aria-hidden="true">
+        <span><i style="background:var(--todo)"></i>待處理</span>
+        <span><i style="background:var(--doing)"></i>進行中</span>
+        <span><i style="background:var(--blocked)"></i>阻塞</span>
+        <span><i style="background:var(--done)"></i>完成</span>
+      </div>
+      <div class="m-scroll" id="mProjScroll">
+        <div class="m-sec">專案</div>
+        <div id="mProjList"></div>
+      </div>
+    </div>
+
+    <div class="m-panel" id="mPanelLinear" data-mpanel="linear">
+      <div class="m-linear-toolbar">
+        <h2>Issues</h2>
+        <div class="m-status-row" id="mStatusRow" role="group" aria-label="狀態篩選">
+          <button type="button" data-status="all" class="active">全部</button>
+          <button type="button" data-status="blocked">阻塞</button>
+          <button type="button" data-status="doing">進行中</button>
+          <button type="button" data-status="todo">待處理</button>
+          <button type="button" data-status="done">完成</button>
+        </div>
+      </div>
+      <div class="m-proj-pills" id="mLinearPills" aria-label="專案篩選"></div>
+      <div class="m-scroll" id="mIssuesScroll"></div>
+    </div>
+
+    <div class="m-panel" id="mPanelOffice" data-mpanel="office">
+      <div class="m-top">
+        <div class="m-brand">
+          <div class="mark">HQ</div>
+          <div>
+            <h1>辦公室</h1>
+            <p>簡化 Agent 列表 · 桌面才有完整 3D</p>
+          </div>
+        </div>
+      </div>
+      <div class="m-office-hint">手機以專案掃讀為主。點 Agent 開啟任務 bottom sheet，可改狀態。</div>
+      <div class="m-scroll" id="mAgentScroll" style="padding-top:0"></div>
+    </div>
+
+    <div class="m-panel" id="mPanelSettings" data-mpanel="settings">
+      <div class="m-top">
+        <div class="m-brand">
+          <div class="mark">HQ</div>
+          <div><h1>設定</h1><p>Prototype · PRD v1.3</p></div>
+        </div>
+      </div>
+      <div class="m-scroll">
+        <div class="settings-card" style="margin:12px">
+          <label for="mRoleSelect">驗收角色</label>
+          <select id="mRoleSelect" style="margin-top:8px;width:100%;height:44px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);padding:0 10px">
+            <option value="mei">mei</option>
+            <option value="cto">CTO</option>
+            <option value="bot">bot</option>
+          </select>
+          <p style="margin-top:8px;font-size:12px;color:var(--text-3)">僅原型用；切換不影響 Issue 資料。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="m-dock" id="mDock" aria-label="手機導覽">
+    <button type="button" class="active" data-mpanel="projects" id="mDockProjects">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      專案
+    </button>
+    <button type="button" data-mpanel="linear" id="mDockLinear">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+      Linear
+    </button>
+    <button type="button" data-mpanel="office" id="mDockOffice">
+      <svg viewBox="0 0 24 24"><path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-6h6v6"/></svg>
+      辦公室
+    </button>
+    <button type="button" data-mpanel="settings" id="mDockSettings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      設定
+    </button>
+  </nav>
+</div>
+
+<!-- Bottom sheet: project members / tasks + status change -->
+<div class="m-sheet-root" id="mSheetRoot" aria-hidden="true">
+  <div class="m-sheet-backdrop" id="mSheetBackdrop"></div>
+  <div class="m-sheet" role="dialog" aria-modal="true" aria-labelledby="mSheetTitle">
+    <div class="m-sheet-handle" aria-hidden="true"></div>
+    <div class="m-sheet-head">
+      <div style="min-width:0">
+        <h2 id="mSheetTitle">專案</h2>
+        <p class="sub" id="mSheetSub"></p>
+      </div>
+      <button type="button" class="close-x" id="mSheetClose" aria-label="關閉">×</button>
+    </div>
+    <div class="m-sheet-body" id="mSheetBody"></div>
   </div>
 </div>
 
@@ -755,7 +1189,43 @@ const filter = {
   agentId: "all",
   status: "all",
   query: "",
+  mobilePanel: "projects", // projects | linear | office | settings
 };
+
+let sheetMode = null; // { type: "project"|"agent"|"issue", id }
+const STATUS_ORDER = ["todo", "doing", "blocked", "done"];
+
+function isPhone(){
+  return window.matchMedia("(max-width: 430px)").matches;
+}
+
+function findTaskRef(issueId){
+  const [agentId, idxStr] = issueId.split("-");
+  const idx = +idxStr;
+  const role = ROLES.find(r => r.id === agentId);
+  if (!role || !role.tasks[idx]) return null;
+  return { role, task: role.tasks[idx], index: idx };
+}
+
+function setTaskStatus(issueId, nextStatus, blockedReason){
+  const ref = findTaskRef(issueId);
+  if (!ref) return;
+  ref.task.status = nextStatus;
+  if (nextStatus === "blocked") {
+    ref.task.blockedReason = (blockedReason || ref.task.blockedReason || "需補充阻塞原因").trim();
+    if (ref.role.blockedReason === undefined || nextStatus === "blocked") {
+      // keep role-level hint in sync when primary task blocked
+      const prim = ref.role.tasks.find(t => t.status === "blocked");
+      if (prim) ref.role.blockedReason = prim.blockedReason;
+    }
+  } else {
+    delete ref.task.blockedReason;
+    if (!ref.role.tasks.some(t => t.status === "blocked")) delete ref.role.blockedReason;
+  }
+  const now = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  ref.task.updatedAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
 
 function aggregate(tasks){
   for (const s of ["blocked","doing","todo","done"])
@@ -1162,11 +1632,14 @@ function renderProjList(){
 
 function renderIssuesTable(){
   const issues = filteredIssues();
-  document.getElementById("issueCount").textContent = `${issues.length} 筆`;
+  const countEl = document.getElementById("issueCount");
+  if (countEl) countEl.textContent = `${issues.length} 筆`;
   const body = document.getElementById("issuesBody");
+  const cards = document.getElementById("issuesCards");
   const empty = document.getElementById("issuesEmpty");
   if (!issues.length) {
     body.innerHTML = "";
+    if (cards) cards.innerHTML = "";
     empty.style.display = "block";
     return;
   }
@@ -1193,6 +1666,32 @@ function renderIssuesTable(){
       renderTopMeta();
     };
   });
+  if (cards) {
+    cards.innerHTML = issues.map(iss => {
+      const badgeClass = iss.status === "blocked" ? "badge-st badge-blocked" : "badge-st";
+      return `<button type="button" class="issue-card ${iss.status==="blocked"?"is-blocked":""}" data-id="${iss.id}" data-agent="${iss.agentId}">
+        <div class="ic-top">
+          <div class="ic-title">${iss.title}</div>
+          <span class="${badgeClass}"><i style="background:${COLOR[iss.status]}"></i>${LABEL[iss.status]}</span>
+        </div>
+        <div class="ic-meta">${iss.project} · ${iss.agentName} · ${iss.updatedAt || "—"}</div>
+        ${iss.blockedReason ? `<div class="ic-br">${iss.blockedReason}</div>` : ""}
+      </button>`;
+    }).join("");
+    cards.querySelectorAll(".issue-card").forEach(card => {
+      card.onclick = () => {
+        selectedIssueId = card.dataset.id;
+        filter.agentId = card.dataset.agent;
+        writeHash();
+        if (isPhone()) openIssueSheet(card.dataset.id);
+        else {
+          const role = ROLES.find(r => r.id === card.dataset.agent);
+          if (role) openLinearAgent(role);
+        }
+        renderTopMeta();
+      };
+    });
+  }
 }
 
 function renderStatusSeg(){
@@ -1300,6 +1799,340 @@ function renderLinearPanels(){
   document.getElementById("linearNavProjects").classList.toggle("active", !issues);
 }
 
+function renderLinearPills(){
+  const host = document.getElementById("linearPills");
+  if (!host) return;
+  host.innerHTML = "";
+  PROJECTS.forEach(p => {
+    const counts = projectStats(p.id);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = (p.id === filter.projectId ? "active" : "")
+      + (counts.blocked > 0 && p.id !== "all" ? " has-blocked" : "");
+    btn.textContent = p.short + (counts.blocked ? ` · ${counts.blocked}` : "");
+    btn.onclick = () => {
+      filter.projectId = p.id;
+      writeHash();
+      renderAll();
+    };
+    host.appendChild(btn);
+  });
+}
+
+function renderMobile(){
+  // summary
+  let blocked = 0, doing = 0, todo = 0, done = 0;
+  ROLES.forEach(role => {
+    const st = aggregate(role.tasks);
+    if (st === "blocked") blocked++;
+    else if (st === "doing") doing++;
+    else if (st === "todo") todo++;
+    else done++;
+  });
+  const sum = document.getElementById("mSummary");
+  if (sum) {
+    const pc = projectStats("all");
+    sum.innerHTML = `<span class="blk">${pc.blocked} 阻塞</span><span>${pc.doing} 進行中</span><span>${pc.todo} 待處理</span><span>${pc.done} 完成</span>`;
+  }
+
+  // project cards
+  const list = document.getElementById("mProjList");
+  if (list) {
+    list.innerHTML = PROJECTS.map(p => {
+      const c = projectStats(p.id);
+      const hasBlocked = c.blocked > 0 && p.id !== "all" ? true : (p.id === "all" && c.blocked > 0);
+      const countsHtml = [
+        c.blocked ? `<span class="b"><i style="background:var(--blocked)"></i>${c.blocked} 阻塞</span>` : "",
+        c.doing ? `<span><i style="background:var(--doing)"></i>${c.doing} 進行中</span>` : "",
+        c.todo ? `<span><i style="background:var(--todo)"></i>${c.todo} 待處理</span>` : "",
+        c.done ? `<span><i style="background:var(--done)"></i>${c.done} 完成</span>` : "",
+      ].filter(Boolean).join("") || `<span style="color:var(--text-3)">—</span>`;
+      return `<button type="button" class="m-proj${hasBlocked && p.id !== "all" ? " has-blocked" : ""}${p.id===filter.projectId?" active":""}" data-id="${p.id}">
+        <div class="row1">
+          <span class="short">${p.short}</span>
+          ${p.platform ? `<span class="badge-plat">本平台</span>` : ""}
+        </div>
+        <div class="full">${p.full}</div>
+        <div class="counts">${countsHtml}</div>
+      </button>`;
+    }).join("");
+    list.querySelectorAll(".m-proj").forEach(btn => {
+      btn.onclick = () => openProjectSheet(btn.dataset.id);
+    });
+  }
+
+  // mobile linear pills + issues
+  const mPills = document.getElementById("mLinearPills");
+  if (mPills) {
+    mPills.innerHTML = PROJECTS.map(p => {
+      const c = projectStats(p.id);
+      return `<button type="button" class="${p.id===filter.projectId?"active":""}${c.blocked && p.id!=="all"?" has-blocked":""}" data-id="${p.id}">${p.short}${c.blocked && p.id!=="all" ? ` · ${c.blocked}` : ""}</button>`;
+    }).join("");
+    mPills.querySelectorAll("button").forEach(btn => {
+      btn.onclick = () => {
+        filter.projectId = btn.dataset.id;
+        writeHash();
+        renderAll();
+      };
+    });
+  }
+  document.querySelectorAll("#mStatusRow button").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.status === filter.status);
+    btn.onclick = () => {
+      filter.status = btn.dataset.status;
+      writeHash();
+      renderAll();
+    };
+  });
+  const mIssues = document.getElementById("mIssuesScroll");
+  if (mIssues) {
+    const issues = filteredIssues();
+    if (!issues.length) {
+      mIssues.innerHTML = `<div class="empty-state" style="display:block;padding:24px">此篩選下沒有 Issue</div>`;
+    } else {
+      mIssues.innerHTML = issues.map(iss => {
+        const badgeClass = iss.status === "blocked" ? "badge-st badge-blocked" : "badge-st";
+        return `<button type="button" class="issue-card ${iss.status==="blocked"?"is-blocked":""}" data-id="${iss.id}" data-agent="${iss.agentId}">
+          <div class="ic-top">
+            <div class="ic-title">${iss.title}</div>
+            <span class="${badgeClass}"><i style="background:${COLOR[iss.status]}"></i>${LABEL[iss.status]}</span>
+          </div>
+          <div class="ic-meta">${iss.project} · ${iss.agentName}</div>
+          ${iss.blockedReason ? `<div class="ic-br">${iss.blockedReason}</div>` : ""}
+        </button>`;
+      }).join("");
+      mIssues.querySelectorAll(".issue-card").forEach(card => {
+        card.onclick = () => openIssueSheet(card.dataset.id);
+      });
+    }
+  }
+
+  // simplified office agents
+  const agents = document.getElementById("mAgentScroll");
+  if (agents) {
+    agents.innerHTML = ROLES.map(role => {
+      const st = aggregate(role.tasks);
+      const cur = currentTask(role, "all");
+      return `<button type="button" class="m-agent${st==="blocked"?" is-blocked":""}" data-id="${role.id}">
+        <img src="${catSrc(role.id)}" alt="" />
+        <div style="flex:1;min-width:0">
+          <div class="name">${role.person}</div>
+          <div class="role">${role.name} · <span style="color:${COLOR[st]};font-weight:650">${LABEL[st]}</span></div>
+          <div class="task">${cur ? trunc(cur.title, 28) : "—"}</div>
+        </div>
+      </button>`;
+    }).join("");
+    agents.querySelectorAll(".m-agent").forEach(btn => {
+      btn.onclick = () => openAgentSheet(btn.dataset.id);
+    });
+  }
+
+  // dock active
+  document.querySelectorAll("#mDock button").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mpanel === filter.mobilePanel);
+  });
+  document.querySelectorAll(".m-panel").forEach(panel => {
+    panel.classList.toggle("active", panel.dataset.mpanel === filter.mobilePanel);
+  });
+
+  // re-render open sheet if any
+  if (document.getElementById("mSheetRoot").classList.contains("open") && sheetMode) {
+    if (sheetMode.type === "project") fillProjectSheet(sheetMode.id);
+    else if (sheetMode.type === "agent") fillAgentSheet(sheetMode.id);
+    else if (sheetMode.type === "issue") fillIssueSheet(sheetMode.id);
+  }
+}
+
+function openMobilePanel(panel){
+  filter.mobilePanel = panel;
+  if (panel === "linear") filter.view = "linear";
+  else if (panel === "office") filter.view = "office";
+  else if (panel === "settings") filter.view = "settings";
+  else filter.view = "office"; // projects home still maps loosely
+  writeHash();
+  renderAll();
+}
+
+function openSheet(){
+  const root = document.getElementById("mSheetRoot");
+  root.classList.add("open");
+  root.setAttribute("aria-hidden", "false");
+}
+function closeSheet(){
+  const root = document.getElementById("mSheetRoot");
+  root.classList.remove("open");
+  root.setAttribute("aria-hidden", "true");
+  sheetMode = null;
+}
+
+function statusChipsHTML(current, issueId){
+  return `<div class="status-chips" data-issue="${issueId}">
+    ${STATUS_ORDER.map(s => `
+      <button type="button" data-st="${s}" class="${s===current?"active":""}">
+        <i style="background:${COLOR[s]}"></i>${LABEL[s]}
+      </button>`).join("")}
+  </div>
+  <input class="blocked-reason-input${current==="blocked"?" show":""}" data-issue="${issueId}" type="text"
+    placeholder="阻塞原因（必填）" value="${(findTaskRef(issueId)?.task.blockedReason || "").replace(/"/g, "&quot;")}" />`;
+}
+
+function bindStatusChips(root){
+  root.querySelectorAll(".status-chips").forEach(group => {
+    const issueId = group.dataset.issue;
+    const input = root.querySelector(`.blocked-reason-input[data-issue="${issueId}"]`);
+    group.querySelectorAll("button").forEach(btn => {
+      btn.onclick = () => {
+        const next = btn.dataset.st;
+        let reason = input ? input.value : "";
+        if (next === "blocked") {
+          if (input) {
+            input.classList.add("show");
+            if (!reason.trim()) {
+              input.focus();
+              input.placeholder = "請填寫阻塞原因後再選阻塞";
+              // still allow set with default
+              reason = reason.trim() || "需補充阻塞原因";
+            }
+          }
+        } else if (input) {
+          input.classList.remove("show");
+        }
+        setTaskStatus(issueId, next, reason);
+        writeHash();
+        renderAll();
+      };
+    });
+    if (input) {
+      input.onchange = () => {
+        const ref = findTaskRef(issueId);
+        if (ref && ref.task.status === "blocked") {
+          setTaskStatus(issueId, "blocked", input.value);
+          renderAll();
+        }
+      };
+    }
+  });
+}
+
+function openProjectSheet(projectId){
+  filter.projectId = projectId;
+  writeHash();
+  sheetMode = { type: "project", id: projectId };
+  fillProjectSheet(projectId);
+  openSheet();
+  renderMobile();
+}
+
+function fillProjectSheet(projectId){
+  const p = PROJECTS.find(x => x.id === projectId) || PROJECTS[0];
+  const c = projectStats(projectId);
+  document.getElementById("mSheetTitle").textContent = p.short;
+  const agents = ROLES.filter(r => projectId === "all" || roleRelated(r, projectId));
+  document.getElementById("mSheetSub").textContent =
+    `${agents.length} 位相關 Agent · ${c.blocked} 阻塞 · ${c.doing} 進行中`;
+  const body = document.getElementById("mSheetBody");
+  let html = `<div class="m-sec" style="padding-left:0">成員</div>`;
+  html += agents.map(role => {
+    const vis = tasksForProject(role, projectId);
+    const st = aggregate(vis.length ? vis : role.tasks);
+    const cur = currentTask(role, projectId);
+    return `<button type="button" class="m-member${st==="blocked"?" is-blocked":""}" data-agent="${role.id}">
+      <img src="${catSrc(role.id)}" alt="" />
+      <div class="meta">
+        <div class="name">${role.person}</div>
+        <div class="task">${cur ? trunc(cur.title, 32) : "—"}</div>
+      </div>
+      <span class="st-pill"><i style="background:${COLOR[st]}"></i>${LABEL[st]}</span>
+    </button>`;
+  }).join("");
+  const issues = allIssues().filter(i => projectId === "all" || i.project === projectId)
+    .sort((a,b) => {
+    const o = { blocked:0, doing:1, todo:2, done:3 };
+    return o[a.status] - o[b.status];
+  });
+  html += `<div class="m-sec" style="padding-left:0;margin-top:12px">任務 · 點狀態可改</div>`;
+  html += issues.map(iss => `
+    <div class="m-task${iss.status==="blocked"?" is-blocked":""}" data-id="${iss.id}">
+      <div class="t-title">${iss.title}</div>
+      <div class="t-meta">${iss.agentName} · ${iss.project} · ${iss.updatedAt || "—"}</div>
+      ${iss.blockedReason ? `<div class="br">${iss.blockedReason}</div>` : ""}
+      ${statusChipsHTML(iss.status, iss.id)}
+    </div>`).join("") || `<p style="color:var(--text-3);font-size:13px">此專案尚無任務</p>`;
+  body.innerHTML = html;
+  body.querySelectorAll(".m-member").forEach(btn => {
+    btn.onclick = () => openAgentSheet(btn.dataset.agent);
+  });
+  bindStatusChips(body);
+}
+
+function openAgentSheet(agentId){
+  filter.agentId = agentId;
+  writeHash();
+  sheetMode = { type: "agent", id: agentId };
+  fillAgentSheet(agentId);
+  openSheet();
+}
+
+function fillAgentSheet(agentId){
+  const role = ROLES.find(r => r.id === agentId);
+  if (!role) return;
+  const st = aggregate(role.tasks);
+  document.getElementById("mSheetTitle").textContent = role.person;
+  document.getElementById("mSheetSub").textContent = `${role.name} · ${role.title}`;
+  const body = document.getElementById("mSheetBody");
+  let html = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <img src="${catSrc(role.id)}" alt="" style="width:48px;height:48px;border-radius:50%;border:1px solid var(--border);object-fit:cover" />
+      <div>
+        <div style="font-weight:650;font-size:15px">${role.person}</div>
+        <div style="font-size:12px;color:${COLOR[st]};font-weight:650;margin-top:2px">${LABEL[st]}</div>
+      </div>
+    </div>
+    ${st==="blocked" && roleBlockedReason(role) ? `<div class="br" style="margin-bottom:14px">${roleBlockedReason(role)}</div>` : ""}
+    <div class="m-sec" style="padding-left:0">今日任務 · 點狀態可改</div>`;
+  role.tasks.forEach((t, i) => {
+    const id = `${role.id}-${i}`;
+    html += `<div class="m-task${t.status==="blocked"?" is-blocked":""}">
+      <div class="t-title">${t.title}</div>
+      <div class="t-meta">${t.projectFull || t.project} · ${t.updatedAt || "—"}</div>
+      ${t.blockedReason ? `<div class="br">${t.blockedReason}</div>` : ""}
+      ${statusChipsHTML(t.status, id)}
+    </div>`;
+  });
+  body.innerHTML = html;
+  bindStatusChips(body);
+}
+
+function openIssueSheet(issueId){
+  selectedIssueId = issueId;
+  const ref = findTaskRef(issueId);
+  if (ref) filter.agentId = ref.role.id;
+  writeHash();
+  sheetMode = { type: "issue", id: issueId };
+  fillIssueSheet(issueId);
+  openSheet();
+}
+
+function fillIssueSheet(issueId){
+  const iss = allIssues().find(i => i.id === issueId);
+  if (!iss) return;
+  document.getElementById("mSheetTitle").textContent = iss.title;
+  document.getElementById("mSheetSub").textContent = `${iss.project} · ${iss.person}`;
+  const body = document.getElementById("mSheetBody");
+  body.innerHTML = `
+    <div class="m-task${iss.status==="blocked"?" is-blocked":""}" style="margin:0">
+      <div class="t-title">${iss.title}</div>
+      <div class="t-meta">${iss.agentName} · ${iss.projectFull || iss.project}<br/>更新：${fmtTaipei(iss.updatedAt)}</div>
+      ${iss.blockedReason ? `<div class="br">${iss.blockedReason}</div>` : ""}
+      <div class="m-sec" style="padding-left:0;margin-top:8px">變更狀態</div>
+      ${statusChipsHTML(iss.status, iss.id)}
+    </div>
+    <button type="button" class="icon-btn" id="mOpenAgentFromIssue" style="margin-top:14px;min-height:44px;width:100%;justify-content:center">查看 ${iss.person} 全部任務</button>`;
+  bindStatusChips(body);
+  const go = document.getElementById("mOpenAgentFromIssue");
+  if (go) go.onclick = () => openAgentSheet(iss.agentId);
+}
+
 function renderAll(){
   document.querySelectorAll(".view").forEach(el => {
     el.classList.toggle("active", el.dataset.view === filter.view);
@@ -1318,6 +2151,8 @@ function renderAll(){
   renderIssuesTable();
   renderProjCards();
   renderLinearPanels();
+  renderLinearPills();
+  renderMobile();
 }
 
 function openCmd(){
@@ -1421,6 +2256,12 @@ document.getElementById("cmdBackdrop").onclick = (e) => {
 };
 document.getElementById("cmdInput").addEventListener("input", e => renderCmd(e.target.value));
 
+document.querySelectorAll("#mDock button").forEach(btn => {
+  btn.onclick = () => openMobilePanel(btn.dataset.mpanel);
+});
+document.getElementById("mSheetClose").onclick = closeSheet;
+document.getElementById("mSheetBackdrop").onclick = closeSheet;
+
 document.addEventListener("keydown", e => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
     e.preventDefault();
@@ -1428,9 +2269,15 @@ document.addEventListener("keydown", e => {
   }
   if (e.key === "Escape") {
     closeCmd();
+    closeSheet();
     if (document.getElementById("officeDrawer").classList.contains("open")) closeOfficeDrawer();
     closeLinearDetail();
   }
+});
+
+window.addEventListener("resize", () => {
+  // keep mobile/desktop shells in sync without resetting filters
+  renderMobile();
 });
 
 window.addEventListener("hashchange", () => {
@@ -1441,7 +2288,13 @@ window.addEventListener("hashchange", () => {
 readHash();
 if (!location.hash) {
   filter.view = "office";
+  filter.mobilePanel = "projects";
   writeHash();
+} else {
+  // map desktop view → mobile panel when landing on phone
+  if (filter.view === "linear") filter.mobilePanel = "linear";
+  else if (filter.view === "settings") filter.mobilePanel = "settings";
+  else if (filter.view === "office" && !filter.mobilePanel) filter.mobilePanel = "projects";
 }
 renderAll();
 </script>
