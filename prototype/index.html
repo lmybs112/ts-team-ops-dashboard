@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Team HQ · Office ∥ Linear</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #0a0a0b;
+  --surface: #111113;
+  --surface-2: #18181b;
+  --surface-3: #1f1f23;
+  --border: #27272a;
+  --border-strong: #3f3f46;
+  --text: #fafafa;
+  --text-2: #a1a1aa;
+  --text-3: #71717a;
+  --todo: #6B7280;
+  --doing: #2563EB;
+  --blocked: #DC2626;
+  --done: #16A34A;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans TC", "PingFang TC", sans-serif;
+  --top-h: 48px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  font-size: 13px;
+  line-height: 1.45;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.app {
+  height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.topbar {
+  height: var(--top-h);
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 50;
+}
+.brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.brand .mark {
+  width: 24px; height: 24px; border-radius: 5px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  display: grid; place-items: center;
+  font-size: 9px; font-weight: 700;
+}
+.brand h1 { font-size: 13px; font-weight: 600; letter-spacing: -0.02em; }
+.view-toggle {
+  display: inline-flex; gap: 0; padding: 2px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  margin-left: 4px;
+}
+.view-toggle button {
+  border: 0; border-radius: 5px; padding: 5px 14px;
+  font-size: 12px; font-weight: 550;
+  background: transparent; color: var(--text-3);
+}
+.view-toggle button.active {
+  background: var(--surface-3);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+.top-meta { font-size: 12px; color: var(--text-2); margin-left: 8px; }
+.top-meta .blk { color: #f87171; font-weight: 600; }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.filter-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 26px; padding: 0 8px; border-radius: 5px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 11px; color: var(--text-2); font-weight: 500;
+}
+.chip strong { color: var(--text); font-weight: 550; }
+.chip.chip-active {
+  background: rgba(37,99,235,0.12);
+  border-color: rgba(37,99,235,0.35);
+  color: #93c5fd;
+}
+.chip button.clear {
+  border: 0; background: transparent; color: var(--text-3);
+  padding: 0 0 0 2px; font-size: 14px; line-height: 1;
+}
+.chip button.clear:hover { color: var(--text); }
+.search-btn, .icon-btn {
+  height: 28px; padding: 0 10px;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--text-2);
+  font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.search-btn:hover, .icon-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.search-btn .kbd {
+  font-size: 10px; color: var(--text-3);
+  border: 1px solid var(--border); border-radius: 3px;
+  padding: 0 4px; background: var(--surface-2);
+}
+.nav-secondary { display: flex; gap: 2px; }
+.nav-secondary button {
+  border: 0; background: transparent;
+  padding: 5px 8px; border-radius: 5px;
+  font-size: 11.5px; color: var(--text-3); font-weight: 500;
+}
+.nav-secondary button:hover { background: var(--surface-2); color: var(--text-2); }
+.nav-secondary button:disabled { opacity: 0.4; cursor: not-allowed; }
+.nav-secondary button.active { color: var(--text); background: var(--surface-2); }
+.views { flex: 1; min-height: 0; position: relative; }
+.view { position: absolute; inset: 0; display: none; overflow: hidden; }
+.view.active { display: flex; }
+
+/* VIEW OFFICE */
+#view-office { flex-direction: column; background: #0c0c0e; }
+.office-stage {
+  flex: 1; min-height: 0; position: relative; margin: 0;
+  background: #141416 url("assets/scene/office-scene-3d.png") center center / cover no-repeat;
+}
+.office-hud {
+  position: absolute; top: 12px; left: 12px; z-index: 6;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+}
+.office-hud > * { pointer-events: auto; }
+.hud-card {
+  background: rgba(17,17,19,0.88);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; max-width: 220px;
+}
+.hud-card h3 {
+  font-size: 11px; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;
+}
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.legend span {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text-2); font-weight: 500;
+}
+.legend i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.legend .lg-blocked { color: #fca5a5; font-weight: 600; }
+.proj-pills { display: flex; flex-wrap: wrap; gap: 4px; max-width: 280px; }
+.proj-pill {
+  border: 1px solid var(--border); background: rgba(17,17,19,0.9);
+  border-radius: 5px; padding: 4px 8px;
+  font-size: 11px; font-weight: 500; color: var(--text-2);
+}
+.proj-pill:hover { border-color: var(--border-strong); color: var(--text); }
+.proj-pill.active {
+  background: var(--surface-3); color: var(--text); border-color: var(--border-strong);
+}
+.proj-pill.has-blocked { border-color: rgba(220,38,38,0.5); }
+.proj-pill.has-blocked.active {
+  background: rgba(220,38,38,0.1); border-color: rgba(220,38,38,0.55);
+}
+.hotspots { position: absolute; inset: 0; z-index: 3; }
+.hot {
+  position: absolute; border: 0; padding: 0; background: transparent;
+  cursor: pointer; border-radius: 10px; outline: none; display: block;
+  transition: opacity .15s, box-shadow .15s, background .15s, filter .15s; z-index: 3;
+}
+.hot.dim { opacity: 0.22; filter: grayscale(0.45); }
+.hot.hl, .hot:hover, .hot.selected {
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 0 1.5px rgba(255,255,255,0.38), 0 10px 24px rgba(0,0,0,0.22); z-index: 5;
+}
+.hot.hl { opacity: 1; filter: none; }
+.hot.blocked-hot { box-shadow: 0 0 0 1.5px rgba(220,38,38,0.5), 0 0 18px rgba(220,38,38,0.16); }
+.hot.blocked-hot:hover, .hot.blocked-hot.selected {
+  box-shadow: 0 0 0 2px rgba(220,38,38,0.7), 0 12px 28px rgba(220,38,38,0.22);
+}
+.hot .label-stack {
+  pointer-events: none; position: absolute; left: 50%; bottom: 2%;
+  transform: translateX(-50%); z-index: 4;
+  display: flex; flex-direction: column-reverse; align-items: center; gap: 3px;
+  max-width: 96%; width: max-content;
+}
+.hot .tag {
+  pointer-events: none; position: relative; z-index: 4;
+  padding: 4px 8px 5px; border-radius: 6px;
+  background: rgba(250,250,250,0.96); color: #111;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.06);
+  text-align: center; line-height: 1.2; min-width: 72px; max-width: 160px;
+}
+.hot .tag .role { display: block; font-size: 10.5px; font-weight: 650; letter-spacing: -0.01em; }
+.hot .tag .task {
+  display: block; font-size: 9px; font-weight: 500; color: #52525b;
+  margin-top: 1px; max-width: 148px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hot .tag .chip-st {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 2px; font-size: 9.5px; font-weight: 650;
+}
+.hot .tag .chip-st i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.hot .tag .chip-st.chip-blocked { color: #b91c1c; }
+.hot .tag .chip-st.chip-blocked i {
+  box-shadow: 0 0 0 2px rgba(220,38,38,0.35);
+  animation: blocked-pulse 1.8s ease-in-out infinite;
+}
+.hot .tag .chip-st.chip-doing i { animation: doing-pulse 2.2s ease-in-out infinite; }
+.hot .reason {
+  pointer-events: none; position: relative; z-index: 4;
+  max-width: 148px; padding: 2px 6px; border-radius: 4px;
+  background: rgba(185,28,28,0.96); color: #fff;
+  font-size: 9px; font-weight: 650;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.22), 0 4px 10px rgba(220,38,38,0.35);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hot .walker {
+  pointer-events: none; position: absolute; left: 42%; bottom: 28%;
+  width: 10px; height: 4px; border-radius: 999px;
+  background: rgba(37,99,235,0.45); box-shadow: 0 0 8px rgba(37,99,235,0.35);
+  opacity: 0; z-index: 3;
+}
+.hot.doing .walker { opacity: 1; animation: walk-short 4.8s ease-in-out infinite; }
+@keyframes walk-short {
+  0%, 100% { transform: translateX(0); }
+  35% { transform: translateX(14px); }
+  70% { transform: translateX(-8px); }
+}
+@keyframes blocked-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes doing-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .hot.doing .walker,
+  .hot .tag .chip-st.chip-blocked i,
+  .hot .tag .chip-st.chip-doing i { animation: none; }
+}
+.office-dock {
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  padding: 8px 12px 10px; background: rgba(17,17,19,0.95); border-top: 1px solid var(--border);
+}
+.dock-inner {
+  display: flex; gap: 2px; padding: 4px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.dock-inner button {
+  border: 0; background: transparent; width: 56px; padding: 6px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  border-radius: 6px; color: var(--text-2); font-size: 10px; font-weight: 500; position: relative;
+}
+.dock-inner button:hover { background: var(--surface-2); color: var(--text); }
+.dock-inner button.active { background: var(--surface-2); color: var(--text); }
+.dock-inner button.dim { opacity: 0.3; }
+.dock-inner img {
+  width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--border); background: var(--surface-3);
+}
+.dock-inner .dot {
+  position: absolute; top: 6px; right: 10px;
+  width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--bg);
+}
+.dock-inner .dot.blocked-dot { width: 8px; height: 8px; }
+.drawer-backdrop {
+  display: none; position: absolute; inset: 0; z-index: 20; background: rgba(0,0,0,0.35);
+}
+.drawer-backdrop.show { display: block; }
+.drawer {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(360px, 92vw);
+  z-index: 25; background: var(--surface); border-left: 1px solid var(--border);
+  transform: translateX(100%); transition: transform .2s ease;
+  display: flex; flex-direction: column; box-shadow: -12px 0 40px rgba(0,0,0,0.35);
+}
+.drawer.open { transform: translateX(0); }
+.drawer-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.drawer-head h2 { font-size: 13px; font-weight: 600; }
+.drawer-head .sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.drawer-body { flex: 1; overflow: auto; padding: 12px 14px 16px; }
+.close-x {
+  width: 28px; height: 28px; border: 0; border-radius: 6px;
+  background: transparent; color: var(--text-2); font-size: 16px;
+  display: grid; place-items: center;
+}
+.close-x:hover { background: var(--surface-2); color: var(--text); }
+
+/* VIEW LINEAR */
+#view-linear { flex-direction: row; background: var(--bg); }
+.linear-side {
+  width: 240px; flex-shrink: 0; background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: auto; padding: 12px 10px;
+}
+.side-sec {
+  font-size: 11px; font-weight: 500; color: var(--text-3);
+  padding: 0 8px 8px; letter-spacing: 0.01em;
+}
+.side-nav { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
+.side-nav button {
+  text-align: left; border: 0; border-radius: 6px;
+  background: transparent; color: var(--text-2);
+  padding: 7px 10px; font-size: 12.5px; font-weight: 500;
+}
+.side-nav button:hover { background: var(--surface-2); color: var(--text); }
+.side-nav button.active {
+  background: var(--surface-2); color: var(--text); border: 1px solid var(--border-strong);
+}
+.proj-list { display: flex; flex-direction: column; gap: 2px; }
+.proj {
+  width: 100%; text-align: left; cursor: pointer;
+  border: 1px solid transparent; border-radius: 6px;
+  background: transparent; color: var(--text); padding: 8px 10px;
+}
+.proj:hover { background: var(--surface-2); }
+.proj.active { background: var(--surface-2); border-color: var(--border-strong); }
+.proj.has-blocked { border-color: rgba(220,38,38,0.45); }
+.proj.has-blocked.active {
+  background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.55);
+}
+.proj .row1 { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proj .short { font-size: 12.5px; font-weight: 500; letter-spacing: -0.01em; }
+.proj .badge-plat {
+  font-size: 9px; font-weight: 600; padding: 1px 5px; border-radius: 4px;
+  background: rgba(22,163,74,0.12); color: #4ade80; border: 1px solid rgba(22,163,74,0.28);
+}
+.proj .full {
+  font-size: 10.5px; color: var(--text-3); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.proj .stats {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px;
+  font-size: 10.5px; color: var(--text-3);
+}
+.dots { display: inline-flex; gap: 3px; align-items: center; }
+.dots i { width: 5px; height: 5px; border-radius: 50%; display: inline-block; opacity: 0.2; }
+.dots i.on { opacity: 1; }
+.dots i.on.blocked-dot { transform: scale(1.2); }
+.stat-num { font-variant-numeric: tabular-nums; }
+.stat-num .b { color: #f87171; font-weight: 600; }
+.stat-num .d { color: #93c5fd; font-weight: 500; }
+.stat-num .t { color: #a1a1aa; }
+.stat-num .g { color: #86efac; font-weight: 500; }
+.linear-main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.linear-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  background: var(--surface); flex-shrink: 0;
+}
+.linear-toolbar h2 { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
+.linear-toolbar .count { font-size: 12px; color: var(--text-3); }
+.status-seg {
+  display: inline-flex; gap: 0; padding: 2px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px; margin-left: auto;
+}
+.status-seg button {
+  border: 0; border-radius: 4px; padding: 4px 9px;
+  font-size: 11px; font-weight: 500; background: transparent; color: var(--text-3);
+}
+.status-seg button.active {
+  background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong);
+}
+.issues-wrap { flex: 1; overflow: auto; }
+.issues-table { width: 100%; border-collapse: collapse; }
+.issues-table th {
+  position: sticky; top: 0; z-index: 2; text-align: left;
+  font-size: 11px; font-weight: 550; color: var(--text-3); letter-spacing: 0.02em;
+  background: var(--bg); border-bottom: 1px solid var(--border); padding: 8px 12px;
+}
+.issues-table td {
+  padding: 10px 12px; border-bottom: 1px solid var(--border);
+  vertical-align: middle; font-size: 12.5px;
+}
+.issues-table tr { cursor: pointer; }
+.issues-table tbody tr:hover { background: var(--surface); }
+.issues-table tr.selected { background: var(--surface-2); }
+.issues-table tr.is-blocked td:first-child { box-shadow: inset 3px 0 0 var(--blocked); }
+.issue-title { font-weight: 500; letter-spacing: -0.01em; }
+.badge-st {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 550; padding: 2px 7px; border-radius: 4px;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.badge-st i { width: 6px; height: 6px; border-radius: 50%; }
+.badge-st.badge-blocked {
+  background: rgba(220,38,38,0.1); color: #fca5a5; border-color: rgba(220,38,38,0.35);
+}
+.empty-state { padding: 48px 24px; text-align: center; color: var(--text-3); font-size: 13px; }
+.linear-detail {
+  width: 320px; flex-shrink: 0; background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: none; flex-direction: column; overflow: hidden;
+}
+.linear-detail.open { display: flex; }
+.linear-detail .drawer-head { flex-shrink: 0; }
+.linear-detail .drawer-body { flex: 1; overflow: auto; }
+.projects-panel { display: none; flex: 1; overflow: auto; padding: 16px; }
+.projects-panel.active { display: block; }
+.issues-panel { display: none; flex: 1; min-height: 0; flex-direction: column; overflow: hidden; }
+.issues-panel.active { display: flex; }
+.proj-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.proj-card {
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  padding: 14px; cursor: pointer; text-align: left; width: 100%; color: inherit;
+}
+.proj-card:hover { border-color: var(--border-strong); }
+.proj-card h3 { font-size: 14px; font-weight: 600; }
+.proj-card .full { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+.proj-card .counts { display: flex; gap: 10px; margin-top: 12px; font-size: 11.5px; color: var(--text-2); }
+.proj-card .counts span { display: inline-flex; align-items: center; gap: 4px; }
+.proj-card .counts i { width: 6px; height: 6px; border-radius: 50%; }
+#view-settings {
+  flex-direction: column; align-items: flex-start;
+  padding: 32px 40px; overflow: auto; background: var(--bg);
+}
+#view-settings h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+#view-settings .lead { color: var(--text-3); margin-bottom: 24px; font-size: 13px; }
+.settings-card {
+  width: min(420px, 100%); border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface); padding: 16px; margin-bottom: 12px;
+}
+.settings-card label {
+  display: block; font-size: 11px; font-weight: 550; color: var(--text-3);
+  margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.settings-card select, .settings-card input {
+  width: 100%; height: 32px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg); padding: 0 10px; color: var(--text);
+}
+.settings-card p { font-size: 12.5px; color: var(--text-2); margin-top: 8px; line-height: 1.5; }
+.insp-head h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+.insp-head .role { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.insp-head .title { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+.exec-card {
+  margin-top: 12px; padding: 10px 11px;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--bg);
+}
+.exec-label {
+  font-size: 10.5px; font-weight: 500; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;
+}
+.st { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; }
+.st i { width: 7px; height: 7px; border-radius: 50%; }
+.st.st-blocked { color: #fca5a5; }
+.block-card {
+  margin-top: 8px; padding: 9px 10px; border-radius: 6px;
+  background: rgba(220,38,38,0.07); border: 1px solid rgba(220,38,38,0.35);
+}
+.block-card strong { font-size: 10.5px; color: #fca5a5; font-weight: 600; }
+.block-card p { font-size: 12px; margin-top: 4px; color: #fecaca; line-height: 1.4; }
+.sec-h {
+  margin: 14px 0 8px; font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3);
+}
+.task-list { list-style: none; display: grid; gap: 6px; }
+.task-list li {
+  padding: 9px 10px; border-radius: 6px; background: var(--bg); border: 1px solid var(--border);
+}
+.task-list li.is-blocked { border-color: rgba(220,38,38,0.4); background: rgba(220,38,38,0.05); }
+.task-list .t-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.task-list strong { display: block; font-size: 12px; font-weight: 500; }
+.task-list .badge {
+  flex-shrink: 0; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.task-list .badge.badge-blocked {
+  background: rgba(220,38,38,0.1); color: #fca5a5 !important; border-color: rgba(220,38,38,0.35);
+}
+.task-list .meta { display: block; font-size: 10.5px; color: var(--text-3); margin-top: 4px; line-height: 1.35; }
+.task-list .br {
+  margin-top: 5px; font-size: 11px; color: #fecaca;
+  background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.28);
+  border-radius: 4px; padding: 5px 7px;
+}
+.foot { display: flex; gap: 8px; margin-top: 14px; }
+.foot button {
+  flex: 1; height: 32px; border-radius: 6px; border: 0; font-size: 12px; font-weight: 500;
+}
+.foot .primary { background: var(--doing); color: #fff; }
+.foot .ghost { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+.filter-chip-inline {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-bottom: 10px; padding: 3px 8px; border-radius: 4px;
+  background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.28);
+  font-size: 11px; font-weight: 500; color: #93c5fd;
+}
+.agent-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 9px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); margin-bottom: 6px; cursor: pointer;
+}
+.agent-row:hover { border-color: var(--border-strong); }
+.agent-row img {
+  width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border);
+}
+.cmd-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.55);
+  align-items: flex-start; justify-content: center; padding-top: 12vh;
+}
+.cmd-backdrop.show { display: flex; }
+.cmd {
+  width: min(520px, 92vw); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: 10px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5); overflow: hidden;
+}
+.cmd input {
+  width: 100%; height: 44px; border: 0; border-bottom: 1px solid var(--border);
+  background: transparent; padding: 0 16px; font-size: 14px; outline: none;
+}
+.cmd-list { max-height: 320px; overflow: auto; padding: 6px; }
+.cmd-group {
+  font-size: 10px; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px 4px;
+}
+.cmd-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  border: 0; background: transparent; border-radius: 6px;
+  padding: 8px 10px; color: var(--text); font-size: 13px;
+}
+.cmd-item:hover, .cmd-item.hl { background: var(--surface-2); }
+.cmd-item .hint { margin-left: auto; font-size: 11px; color: var(--text-3); }
+@media (max-width: 900px) {
+  .linear-detail { position: absolute; right: 0; top: 0; bottom: 0; z-index: 30; width: min(100%, 360px); }
+  .linear-side { width: 200px; }
+}
+@media (max-width: 720px) {
+  .top-meta { display: none; }
+  .linear-side { display: none; }
+  .nav-secondary { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar" role="banner">
+    <div class="brand">
+      <div class="mark">HQ</div>
+      <h1>Team HQ</h1>
+    </div>
+    <div class="view-toggle" role="tablist" aria-label="視圖切換">
+      <button type="button" id="tabOffice" class="active" role="tab" aria-selected="true" data-view="office">Office</button>
+      <button type="button" id="tabLinear" role="tab" aria-selected="false" data-view="linear">Linear</button>
+    </div>
+    <p class="top-meta" id="topMeta">7 Agent</p>
+    <div class="filter-chips" id="filterChips"></div>
+    <div class="top-actions">
+      <nav class="nav-secondary" aria-label="次要">
+        <button type="button" disabled title="即將推出">看板</button>
+        <button type="button" disabled title="即將推出">矩陣</button>
+        <button type="button" id="tabSettings" data-view="settings">設定</button>
+      </nav>
+      <button type="button" class="search-btn" id="openCmd" title="命令面板">
+        搜尋 <span class="kbd">⌘K</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="views">
+    <section class="view active" id="view-office" data-view="office" aria-label="View Office 整頁貓辦公室">
+      <div class="office-stage" id="stage">
+        <div class="office-hud">
+          <div class="hud-card">
+            <h3>狀態</h3>
+            <div class="legend">
+              <span><i style="background:var(--todo)"></i>待處理</span>
+              <span><i style="background:var(--doing)"></i>進行中</span>
+              <span class="lg-blocked"><i style="background:var(--blocked)"></i>阻塞</span>
+              <span><i style="background:var(--done)"></i>完成</span>
+            </div>
+          </div>
+          <div class="proj-pills" id="officePills" aria-label="專案快篩"></div>
+        </div>
+        <div class="hotspots" id="hotspots"></div>
+        <div class="drawer-backdrop" id="officeBackdrop"></div>
+        <aside class="drawer" id="officeDrawer" aria-live="polite">
+          <div class="drawer-head">
+            <div>
+              <h2 id="officeDrawerTitle">詳情</h2>
+              <p class="sub" id="officeDrawerSub">Agent</p>
+            </div>
+            <button class="close-x" id="officeClose" type="button" aria-label="關閉">×</button>
+          </div>
+          <div class="drawer-body" id="officeDrawerBody"></div>
+        </aside>
+      </div>
+      <nav class="office-dock" aria-label="Agent 快切">
+        <div class="dock-inner" id="dock"></div>
+      </nav>
+    </section>
+
+    <section class="view" id="view-linear" data-view="linear" aria-label="View Linear 整頁 Issues／Projects">
+      <aside class="linear-side" aria-label="專案導覽">
+        <div class="side-sec">工作台</div>
+        <div class="side-nav">
+          <button type="button" class="active" id="linearNavIssues" data-panel="issues">Issues</button>
+          <button type="button" id="linearNavProjects" data-panel="projects">Projects</button>
+        </div>
+        <div class="side-sec">專案篩選</div>
+        <div class="proj-list" id="projList"></div>
+      </aside>
+      <div class="linear-main">
+        <div class="issues-panel active" id="panelIssues">
+          <div class="linear-toolbar">
+            <h2>Issues</h2>
+            <span class="count" id="issueCount">0</span>
+            <div class="status-seg" id="statusSeg" role="group" aria-label="狀態篩選">
+              <button type="button" data-status="all" class="active">全部</button>
+              <button type="button" data-status="blocked">阻塞</button>
+              <button type="button" data-status="doing">進行中</button>
+              <button type="button" data-status="todo">待處理</button>
+              <button type="button" data-status="done">完成</button>
+            </div>
+          </div>
+          <div class="issues-wrap">
+            <table class="issues-table">
+              <thead>
+                <tr>
+                  <th style="width:32%">Title</th>
+                  <th style="width:16%">Project</th>
+                  <th style="width:12%">Assignee</th>
+                  <th style="width:10%">Status</th>
+                  <th style="width:18%">Blocked reason</th>
+                  <th style="width:12%">Updated</th>
+                </tr>
+              </thead>
+              <tbody id="issuesBody"></tbody>
+            </table>
+            <div class="empty-state" id="issuesEmpty" style="display:none">此篩選下沒有 Issue</div>
+          </div>
+        </div>
+        <div class="projects-panel" id="panelProjects">
+          <div class="linear-toolbar" style="border:0;padding:0 0 14px;background:transparent">
+            <h2>Projects</h2>
+            <span class="count">6 + 全部</span>
+          </div>
+          <div class="proj-cards" id="projCards"></div>
+          <div id="projectDetail" style="margin-top:20px;display:none"></div>
+        </div>
+      </div>
+      <aside class="linear-detail" id="linearDetail">
+        <div class="drawer-head">
+          <div>
+            <h2 id="linearDetailTitle">詳情</h2>
+            <p class="sub" id="linearDetailSub"></p>
+          </div>
+          <button class="close-x" id="linearClose" type="button" aria-label="關閉">×</button>
+        </div>
+        <div class="drawer-body" id="linearDetailBody"></div>
+      </aside>
+    </section>
+
+    <section class="view" id="view-settings" data-view="settings" aria-label="設定">
+      <h2>設定</h2>
+      <p class="lead">簡版 · PRD v1.3</p>
+      <div class="settings-card">
+        <label for="roleSelect">驗收角色</label>
+        <select id="roleSelect">
+          <option value="mei">mei</option>
+          <option value="cto">CTO</option>
+          <option value="bot">bot</option>
+        </select>
+        <p>僅原型用；切換不影響 Issue 資料。</p>
+      </div>
+      <div class="settings-card">
+        <label>關於</label>
+        <p>Team HQ · Office ∥ Linear<br/>Prototype · PRD v1.3 · 2026-09-19</p>
+      </div>
+      <button type="button" class="icon-btn" id="backFromSettings" style="margin-top:8px">← 回 Office</button>
+    </section>
+  </div>
+</div>
+
+<div class="cmd-backdrop" id="cmdBackdrop" role="dialog" aria-label="命令面板">
+  <div class="cmd">
+    <input type="search" id="cmdInput" placeholder="跳轉視圖、Agent、專案、任務…" autocomplete="off" />
+    <div class="cmd-list" id="cmdList"></div>
+  </div>
+</div>
+
+<script>
+const LABEL = { todo: "待處理", doing: "進行中", blocked: "阻塞", done: "完成" };
+const COLOR = { todo: "#6B7280", doing: "#2563EB", blocked: "#DC2626", done: "#16A34A" };
+const CHIP = { todo: "chip-todo", doing: "chip-doing", blocked: "chip-blocked", done: "chip-done" };
+
+const PROJECTS = [
+  { id: "all", short: "全部", full: "所有專案總覽", platform: false },
+  { id: "marketing", short: "marketing", full: "ts-inf-marketing-component", platform: false },
+  { id: "iframe", short: "iframe", full: "ts-iframe-no-media", platform: false },
+  { id: "carousel", short: "carousel", full: "ts-inf-product-carousel-component", platform: false },
+  { id: "try-on", short: "try-on", full: "ts-try-on-demo", platform: false },
+  { id: "llm-chat", short: "llm-chat", full: "ts-llm-chat-modal", platform: false },
+  { id: "team-ops", short: "team-ops", full: "ts-team-ops-dashboard", platform: true },
+];
+
+const ROLES = [
+  { id:"cto", name:"CTO", person:"CTO", title:"技術策略與架構",
+    x:7.5, y:18, w:20, h:40,
+    tasks:[
+      { title:"拆派辦公室平台 v0.2", project:"team-ops", projectFull:"ts-team-ops-dashboard", status:"doing", updatedAt:"2026-09-19 11:40" },
+      { title:"追蹤 marketing 阻塞鏈", project:"marketing", projectFull:"ts-inf-marketing-component", status:"doing", updatedAt:"2026-09-19 12:05" }
+    ]},
+  { id:"pm", name:"產品", person:"產品經理", title:"需求定義與優先序",
+    x:28.5, y:18, w:20, h:40,
+    tasks:[
+      { title:"MVP 規格 v0.2", project:"team-ops", projectFull:"ts-team-ops-dashboard", status:"done", updatedAt:"2026-09-19 09:20" },
+      { title:"Carousel 需求對齊", project:"carousel", projectFull:"ts-inf-product-carousel-component", status:"doing", updatedAt:"2026-09-19 11:55" }
+    ]},
+  { id:"uiux", name:"UIUX", person:"UI/UX 設計師", title:"介面與體驗設計",
+    x:49.5, y:18, w:20, h:40,
+    tasks:[
+      { title:"工位管理台高保真", project:"team-ops", projectFull:"ts-team-ops-dashboard", status:"doing", updatedAt:"2026-09-19 12:20" },
+      { title:"Try-on 流程線框", project:"try-on", projectFull:"ts-try-on-demo", status:"todo", updatedAt:"2026-09-18 15:30" }
+    ]},
+  { id:"fe", name:"前端", person:"前端工程師", title:"介面實作與效能",
+    x:70.5, y:18, w:20, h:40,
+    blockedReason:"依賴 BE · campaign feed 未合併",
+    tasks:[
+      { title:"Banner 輪播元件", project:"marketing", projectFull:"ts-inf-marketing-component", status:"blocked",
+        blockedReason:"依賴 BE · campaign feed 尚未合併", updatedAt:"2026-09-19 11:10" },
+      { title:"iframe 無媒體模式", project:"iframe", projectFull:"ts-iframe-no-media", status:"doing", updatedAt:"2026-09-19 10:20" },
+      { title:"LLM Chat Modal UI", project:"llm-chat", projectFull:"ts-llm-chat-modal", status:"todo", updatedAt:"2026-09-18 17:40" }
+    ]},
+  { id:"be", name:"後端", person:"後端工程師", title:"API 與資料模型",
+    x:17, y:52, w:21, h:36,
+    blockedReason:"需 DevOps 修 staging 權限",
+    tasks:[
+      { title:"Campaign feed API", project:"marketing", projectFull:"ts-inf-marketing-component", status:"blocked",
+        blockedReason:"需 DevOps 修 staging migration 權限", updatedAt:"2026-09-19 10:48" },
+      { title:"CRUD＋ingest", project:"team-ops", projectFull:"ts-team-ops-dashboard", status:"doing", updatedAt:"2026-09-19 12:00" },
+      { title:"Carousel 商品 API", project:"carousel", projectFull:"ts-inf-product-carousel-component", status:"todo", updatedAt:"2026-09-18 14:00" }
+    ]},
+  { id:"qa", name:"QA", person:"QA / 測試", title:"品質驗證與回歸",
+    x:39.5, y:52, w:21, h:36,
+    tasks:[
+      { title:"A1–A10 驗收案例", project:"team-ops", projectFull:"ts-team-ops-dashboard", status:"todo", updatedAt:"2026-09-18 16:10" },
+      { title:"iframe 回歸", project:"iframe", projectFull:"ts-iframe-no-media", status:"todo", updatedAt:"2026-09-18 16:15" }
+    ]},
+  { id:"devops", name:"DevOps", person:"DevOps / SRE", title:"基礎架構與部署",
+    x:61.5, y:52, w:21, h:36,
+    tasks:[
+      { title:"預覽環境建置", project:"team-ops", projectFull:"ts-team-ops-dashboard", status:"done", updatedAt:"2026-09-19 08:55" },
+      { title:"staging migration 權限", project:"marketing", projectFull:"ts-inf-marketing-component", status:"done", updatedAt:"2026-09-19 11:30" }
+    ]}
+];
+
+const filter = {
+  view: "office",
+  linearPanel: "issues",
+  projectId: "all",
+  agentId: "all",
+  status: "all",
+  query: "",
+};
+
+function aggregate(tasks){
+  for (const s of ["blocked","doing","todo","done"])
+    if (tasks.some(t => t.status === s)) return s;
+  return "done";
+}
+function trunc(s, n){ return !s ? "" : (s.length > n ? s.slice(0, n - 1) + "…" : s); }
+function fmtTaipei(s){ return s ? `${s}（Asia/Taipei）` : ""; }
+function roleBlockedReason(role){
+  return role.blockedReason || role.tasks.find(t => t.blockedReason)?.blockedReason || "";
+}
+function tasksForProject(role, projectId){
+  if (!projectId || projectId === "all") return role.tasks.slice();
+  return role.tasks.filter(t => t.project === projectId);
+}
+function roleRelated(role, projectId){
+  if (!projectId || projectId === "all") return true;
+  return role.tasks.some(t => t.project === projectId);
+}
+function projectStats(projectId){
+  const counts = { todo:0, doing:0, blocked:0, done:0 };
+  ROLES.forEach(r => {
+    tasksForProject(r, projectId).forEach(t => { counts[t.status]++; });
+  });
+  return counts;
+}
+function currentTask(role, projectId){
+  const list = tasksForProject(role, projectId);
+  const src = list.length ? list : role.tasks;
+  for (const s of ["blocked","doing","todo","done"]) {
+    const t = src.find(x => x.status === s);
+    if (t) return t;
+  }
+  return src[0];
+}
+function catSrc(id){ return `assets/3d/cats/cat-${id}.png`; }
+
+function allIssues(){
+  const out = [];
+  ROLES.forEach(r => {
+    r.tasks.forEach((t, i) => {
+      out.push({
+        id: `${r.id}-${i}`,
+        title: t.title,
+        project: t.project,
+        projectFull: t.projectFull || t.project,
+        agentId: r.id,
+        agentName: r.name,
+        person: r.person,
+        status: t.status,
+        blockedReason: t.blockedReason || "",
+        updatedAt: t.updatedAt || "",
+      });
+    });
+  });
+  return out;
+}
+
+function filteredIssues(){
+  return allIssues().filter(iss => {
+    if (filter.projectId !== "all" && iss.project !== filter.projectId) return false;
+    if (filter.agentId !== "all" && iss.agentId !== filter.agentId) return false;
+    if (filter.status !== "all" && iss.status !== filter.status) return false;
+    if (filter.query) {
+      const q = filter.query.toLowerCase();
+      const hay = `${iss.title} ${iss.project} ${iss.agentName} ${iss.person} ${iss.blockedReason}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b) => {
+    const o = { blocked:0, doing:1, todo:2, done:3 };
+    return o[a.status] - o[b.status] || b.updatedAt.localeCompare(a.updatedAt);
+  });
+}
+
+function writeHash(){
+  const p = new URLSearchParams();
+  p.set("view", filter.view);
+  if (filter.view === "linear") p.set("panel", filter.linearPanel);
+  if (filter.projectId !== "all") p.set("project", filter.projectId);
+  if (filter.agentId !== "all") p.set("agent", filter.agentId);
+  if (filter.status !== "all") p.set("status", filter.status);
+  if (filter.query) p.set("q", filter.query);
+  const next = "#" + p.toString();
+  if (location.hash !== next) history.replaceState(null, "", next);
+}
+function readHash(){
+  const raw = location.hash.replace(/^#/, "");
+  if (!raw) return;
+  const p = new URLSearchParams(raw);
+  if (p.get("view")) filter.view = p.get("view");
+  if (p.get("panel")) filter.linearPanel = p.get("panel");
+  if (p.get("project")) filter.projectId = p.get("project");
+  if (p.get("agent")) filter.agentId = p.get("agent");
+  if (p.get("status")) filter.status = p.get("status");
+  if (p.has("q")) filter.query = p.get("q") || "";
+}
+
+function setView(view){
+  filter.view = view;
+  writeHash();
+  renderAll();
+}
+
+function clearFilters(){
+  filter.projectId = "all";
+  filter.agentId = "all";
+  filter.status = "all";
+  filter.query = "";
+  writeHash();
+  renderAll();
+}
+
+const hotMap = {};
+const dockMap = {};
+let selectedIssueId = null;
+
+function renderTopMeta(){
+  let blocked = 0, doing = 0, todo = 0, done = 0;
+  ROLES.forEach(role => {
+    const vis = tasksForProject(role, filter.projectId);
+    const st = aggregate(vis.length ? vis : role.tasks);
+    if (st === "blocked") blocked++;
+    else if (st === "doing") doing++;
+    else if (st === "todo") todo++;
+    else done++;
+  });
+  document.getElementById("topMeta").innerHTML =
+    `7 Agent · <span class="blk">${blocked} 阻塞</span> · ${doing} 進行中 · ${todo} 待處理 · ${done} 完成`;
+
+  const chips = [];
+  if (filter.projectId !== "all") {
+    const p = PROJECTS.find(x => x.id === filter.projectId);
+    chips.push(`<span class="chip chip-active">專案 <strong>${p?.short || filter.projectId}</strong><button type="button" class="clear" data-clear="project" aria-label="清除專案">×</button></span>`);
+  }
+  if (filter.status !== "all") {
+    chips.push(`<span class="chip chip-active">狀態 <strong>${LABEL[filter.status]}</strong><button type="button" class="clear" data-clear="status" aria-label="清除狀態">×</button></span>`);
+  }
+  if (filter.agentId !== "all") {
+    const r = ROLES.find(x => x.id === filter.agentId);
+    chips.push(`<span class="chip chip-active">Agent <strong>${r?.name || filter.agentId}</strong><button type="button" class="clear" data-clear="agent" aria-label="清除 Agent">×</button></span>`);
+  }
+  if (filter.query) {
+    chips.push(`<span class="chip chip-active">搜尋 <strong>${trunc(filter.query, 16)}</strong><button type="button" class="clear" data-clear="query" aria-label="清除搜尋">×</button></span>`);
+  }
+  if (chips.length) {
+    chips.push(`<button type="button" class="chip" id="clearAll" style="cursor:pointer">清除篩選</button>`);
+  }
+  const el = document.getElementById("filterChips");
+  el.innerHTML = chips.join("");
+  el.querySelectorAll("[data-clear]").forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const k = btn.dataset.clear;
+      if (k === "project") filter.projectId = "all";
+      if (k === "status") filter.status = "all";
+      if (k === "agent") filter.agentId = "all";
+      if (k === "query") filter.query = "";
+      writeHash();
+      renderAll();
+    };
+  });
+  const ca = document.getElementById("clearAll");
+  if (ca) ca.onclick = clearFilters;
+}
+
+function renderOfficePills(){
+  const host = document.getElementById("officePills");
+  host.innerHTML = "";
+  PROJECTS.forEach(p => {
+    const counts = projectStats(p.id);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "proj-pill"
+      + (p.id === filter.projectId ? " active" : "")
+      + (counts.blocked > 0 && p.id !== "all" ? " has-blocked" : "");
+    btn.textContent = p.short + (counts.blocked ? ` · ${counts.blocked}` : "");
+    btn.onclick = () => {
+      filter.projectId = p.id;
+      writeHash();
+      renderAll();
+    };
+    host.appendChild(btn);
+  });
+}
+
+function renderHotspotsAndDock(){
+  if (!Object.keys(hotMap).length) {
+    const hotspots = document.getElementById("hotspots");
+    const dock = document.getElementById("dock");
+    ROLES.forEach(role => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "hot";
+      btn.dataset.id = role.id;
+      btn.style.left = role.x + "%";
+      btn.style.top = role.y + "%";
+      btn.style.width = role.w + "%";
+      btn.style.height = role.h + "%";
+      btn.setAttribute("aria-label", role.person);
+      btn.onclick = () => openAgent(role.id, "office");
+      hotspots.appendChild(btn);
+      hotMap[role.id] = btn;
+
+      const d = document.createElement("button");
+      d.type = "button";
+      d.dataset.id = role.id;
+      d.title = role.person;
+      d.onclick = () => openAgent(role.id, "office");
+      dock.appendChild(d);
+      dockMap[role.id] = d;
+    });
+  }
+
+  ROLES.forEach(role => {
+    const vis = tasksForProject(role, filter.projectId);
+    const st = aggregate(vis.length ? vis : role.tasks);
+    const cur = currentTask(role, filter.projectId);
+    const related = roleRelated(role, filter.projectId);
+    const q = filter.query.toLowerCase();
+    const queryHit = !q || role.name.toLowerCase().includes(q) || role.person.toLowerCase().includes(q)
+      || role.tasks.some(t => t.title.toLowerCase().includes(q) || t.project.toLowerCase().includes(q));
+    const statusHit = filter.status === "all" || st === filter.status || vis.some(t => t.status === filter.status);
+    const agentHit = filter.agentId === "all" || filter.agentId === role.id;
+
+    const btn = hotMap[role.id];
+    const reason = st === "blocked"
+      ? `<div class="reason" title="${roleBlockedReason(role)}">${trunc(roleBlockedReason(role), 22)}</div>` : "";
+    const chipClass = "chip-st " + (CHIP[st] || "");
+    btn.className = "hot"
+      + (st === "blocked" ? " blocked-hot" : "")
+      + (st === "doing" ? " doing" : "")
+      + (filter.agentId === role.id ? " selected" : "");
+    if (filter.projectId !== "all") {
+      if (related) btn.classList.add("hl");
+      else btn.classList.add("dim");
+    }
+    if (!queryHit || !statusHit || !agentHit) {
+      if (!queryHit || (filter.status !== "all" && !statusHit) || (filter.agentId !== "all" && !agentHit && filter.agentId !== role.id)) {
+        btn.style.visibility = (!queryHit || (filter.status !== "all" && !statusHit)) ? "hidden" : "visible";
+        if (filter.agentId !== "all" && filter.agentId !== role.id) btn.classList.add("dim");
+      }
+    } else {
+      btn.style.visibility = "visible";
+    }
+    btn.innerHTML = `
+      <span class="walker" aria-hidden="true"></span>
+      <div class="label-stack">${reason}<div class="tag">
+        <span class="role">${role.name}</span>
+        <span class="task">${cur ? trunc(cur.title, 18) : "—"}</span>
+        <span class="${chipClass}"><i style="background:${COLOR[st]}"></i>${LABEL[st]}</span>
+      </div></div>`;
+
+    const d = dockMap[role.id];
+    const shortName = role.name.length > 4 ? role.name.slice(0, 4) : role.name;
+    const dotClass = st === "blocked" ? "dot blocked-dot" : "dot";
+    d.className = (filter.agentId === role.id ? "active" : "")
+      + (filter.projectId !== "all" && !related ? " dim" : "");
+    d.innerHTML = `<img src="${catSrc(role.id)}" alt="${role.name}" />
+      <i class="${dotClass}" style="background:${COLOR[st]}"></i><span>${shortName}</span>`;
+  });
+}
+
+function detailHTML(role){
+  const visible = tasksForProject(role, filter.projectId);
+  const st = aggregate(visible.length ? visible : role.tasks);
+  const doneN = visible.filter(t => t.status === "done").length;
+  let sections = "";
+  ["blocked","doing","todo","done"].forEach(s => {
+    const list = visible.filter(t => t.status === s);
+    if (!list.length) return;
+    sections += `<h3 class="sec-h">${LABEL[s]} · ${list.length}</h3><ul class="task-list">` +
+      list.map(t => {
+        const br = t.blockedReason ? `<div class="br">${t.blockedReason}</div>` : "";
+        const badgeClass = t.status === "blocked" ? "badge badge-blocked" : "badge";
+        const liClass = t.status === "blocked" ? "is-blocked" : "";
+        return `<li class="${liClass}">
+          <div class="t-top">
+            <strong>${t.title}</strong>
+            <span class="${badgeClass}" style="color:${COLOR[t.status]}">${LABEL[t.status]}</span>
+          </div>
+          <span class="meta">專案：${t.projectFull || t.project}<br/>更新：${fmtTaipei(t.updatedAt)}</span>
+          ${br}
+        </li>`;
+      }).join("") + `</ul>`;
+  });
+  if (!visible.length) {
+    sections = `<p style="color:var(--text-3);font-size:12.5px">此 Agent 在「${PROJECTS.find(p=>p.id===filter.projectId)?.short}」尚無任務</p>`;
+  }
+  const brText = roleBlockedReason(role);
+  const showBlock = visible.some(t => t.status === "blocked") || (filter.projectId==="all" && aggregate(role.tasks)==="blocked");
+  const stClass = st === "blocked" ? "st st-blocked" : "st";
+  return `
+    <div class="insp-head">
+      <h3>${role.person}</h3>
+      <div class="role">${role.name}</div>
+      <div class="title">${role.title}</div>
+    </div>
+    ${filter.projectId!=="all" ? `<div class="filter-chip-inline">專案：${PROJECTS.find(p=>p.id===filter.projectId)?.short}</div>` : ""}
+    <div class="exec-card">
+      <div class="exec-label">執行狀態</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span class="${stClass}"><i style="background:${COLOR[st]}"></i>${LABEL[st]}</span>
+        <span style="font-size:11px;color:var(--text-3)">${doneN}/${Math.max(visible.length,1)} 完成</span>
+      </div>
+      ${showBlock && brText ? `<div class="block-card"><strong>阻塞原因</strong><p>${brText}</p></div>` : ""}
+    </div>
+    <div class="sec-h">今日任務</div>
+    ${sections}
+    <div class="foot">
+      <button class="primary" type="button" id="gotoLinearFromDetail">在 Linear 看</button>
+      <button class="ghost" type="button" data-close-detail>關閉</button>
+    </div>`;
+}
+
+function openAgent(agentId, preferView){
+  filter.agentId = agentId;
+  const role = ROLES.find(r => r.id === agentId);
+  if (!role) return;
+  writeHash();
+  if (preferView === "office" || filter.view === "office") {
+    if (filter.view !== "office") { filter.view = "office"; }
+    renderAll();
+    document.getElementById("officeDrawerTitle").textContent = role.person;
+    document.getElementById("officeDrawerSub").textContent = "今日任務 · 執行狀態";
+    document.getElementById("officeDrawerBody").innerHTML = detailHTML(role);
+    document.getElementById("officeDrawer").classList.add("open");
+    document.getElementById("officeBackdrop").classList.add("show");
+    const go = document.getElementById("gotoLinearFromDetail");
+    if (go) go.onclick = () => { filter.linearPanel = "issues"; setView("linear"); };
+    document.querySelectorAll("[data-close-detail]").forEach(b => b.onclick = closeOfficeDrawer);
+  } else {
+    filter.view = "linear";
+    renderAll();
+    openLinearAgent(role);
+  }
+}
+
+function closeOfficeDrawer(){
+  document.getElementById("officeDrawer").classList.remove("open");
+  document.getElementById("officeBackdrop").classList.remove("show");
+  filter.agentId = "all";
+  writeHash();
+  renderHotspotsAndDock();
+  renderTopMeta();
+}
+
+function openLinearAgent(role){
+  document.getElementById("linearDetailTitle").textContent = role.person;
+  document.getElementById("linearDetailSub").textContent = "Agent · 執行狀態";
+  document.getElementById("linearDetailBody").innerHTML = detailHTML(role);
+  document.getElementById("linearDetail").classList.add("open");
+  const go = document.getElementById("gotoLinearFromDetail");
+  if (go) go.style.display = "none";
+  document.querySelectorAll("[data-close-detail]").forEach(b => b.onclick = closeLinearDetail);
+}
+
+function closeLinearDetail(){
+  document.getElementById("linearDetail").classList.remove("open");
+  selectedIssueId = null;
+  document.querySelectorAll(".issues-table tr.selected").forEach(r => r.classList.remove("selected"));
+}
+
+function renderProjList(){
+  const projList = document.getElementById("projList");
+  projList.innerHTML = "";
+  PROJECTS.forEach(p => {
+    const counts = projectStats(p.id);
+    const hasBlocked = counts.blocked > 0;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "proj"
+      + (hasBlocked && p.id !== "all" ? " has-blocked" : "")
+      + (p.id === filter.projectId ? " active" : "");
+    btn.dataset.id = p.id;
+    const dots = ["todo","doing","blocked","done"].map(s =>
+      `<i class="${counts[s] ? "on" : ""}${s==="blocked"&&counts[s]?" blocked-dot":""}" style="background:${COLOR[s]}"></i>`
+    ).join("");
+    const statBits = [];
+    if (hasBlocked) statBits.push(`<span class="b">${counts.blocked} 阻塞</span>`);
+    if (counts.doing) statBits.push(`<span class="d">${counts.doing} 進行中</span>`);
+    if (p.id === "all" || (!hasBlocked && !counts.doing)) {
+      if (counts.todo) statBits.push(`<span class="t">${counts.todo} 待處理</span>`);
+      if (counts.done) statBits.push(`<span class="g">${counts.done} 完成</span>`);
+    }
+    btn.innerHTML = `
+      <div class="row1">
+        <span class="short">${p.short}</span>
+        ${p.platform ? `<span class="badge-plat">本平台</span>` : ""}
+      </div>
+      <div class="full">${p.full}</div>
+      <div class="stats">
+        <span class="dots">${dots}</span>
+        <span class="stat-num">${statBits.join(" · ") || "—"}</span>
+      </div>`;
+    btn.onclick = () => {
+      filter.projectId = p.id;
+      writeHash();
+      renderAll();
+    };
+    projList.appendChild(btn);
+  });
+}
+
+function renderIssuesTable(){
+  const issues = filteredIssues();
+  document.getElementById("issueCount").textContent = `${issues.length} 筆`;
+  const body = document.getElementById("issuesBody");
+  const empty = document.getElementById("issuesEmpty");
+  if (!issues.length) {
+    body.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+  body.innerHTML = issues.map(iss => {
+    const badgeClass = iss.status === "blocked" ? "badge-st badge-blocked" : "badge-st";
+    return `<tr data-id="${iss.id}" data-agent="${iss.agentId}" class="${iss.status==="blocked"?"is-blocked":""}${selectedIssueId===iss.id?" selected":""}">
+      <td><div class="issue-title">${iss.title}</div></td>
+      <td><span style="color:var(--text-2)">${iss.project}</span></td>
+      <td>${iss.agentName}</td>
+      <td><span class="${badgeClass}"><i style="background:${COLOR[iss.status]}"></i>${LABEL[iss.status]}</span></td>
+      <td style="color:${iss.blockedReason?"#fecaca":"var(--text-3)"};font-size:11.5px">${iss.blockedReason || "—"}</td>
+      <td style="font-size:11px;color:var(--text-3);white-space:nowrap">${iss.updatedAt || "—"}</td>
+    </tr>`;
+  }).join("");
+  body.querySelectorAll("tr").forEach(tr => {
+    tr.onclick = () => {
+      selectedIssueId = tr.dataset.id;
+      filter.agentId = tr.dataset.agent;
+      writeHash();
+      const role = ROLES.find(r => r.id === tr.dataset.agent);
+      body.querySelectorAll("tr").forEach(r => r.classList.toggle("selected", r.dataset.id === selectedIssueId));
+      if (role) openLinearAgent(role);
+      renderTopMeta();
+    };
+  });
+}
+
+function renderStatusSeg(){
+  document.querySelectorAll("#statusSeg button").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.status === filter.status);
+    btn.onclick = () => {
+      filter.status = btn.dataset.status;
+      writeHash();
+      renderAll();
+    };
+  });
+}
+
+function renderProjCards(){
+  const host = document.getElementById("projCards");
+  const detail = document.getElementById("projectDetail");
+  host.innerHTML = PROJECTS.filter(p => p.id !== "all").map(p => {
+    const c = projectStats(p.id);
+    return `<button type="button" class="proj-card" data-id="${p.id}">
+      <h3>${p.short}${p.platform ? " · 本平台" : ""}</h3>
+      <div class="full">${p.full}</div>
+      <div class="counts">
+        <span><i style="background:var(--blocked)"></i>${c.blocked} 阻塞</span>
+        <span><i style="background:var(--doing)"></i>${c.doing} 進行中</span>
+        <span><i style="background:var(--todo)"></i>${c.todo} 待處理</span>
+        <span><i style="background:var(--done)"></i>${c.done} 完成</span>
+      </div>
+    </button>`;
+  }).join("");
+  host.querySelectorAll(".proj-card").forEach(card => {
+    card.onclick = () => {
+      filter.projectId = card.dataset.id;
+      writeHash();
+      showProjectDetail(card.dataset.id);
+      renderAll();
+    };
+  });
+  if (filter.projectId !== "all") showProjectDetail(filter.projectId);
+  else { detail.style.display = "none"; detail.innerHTML = ""; }
+}
+
+function showProjectDetail(projectId){
+  const p = PROJECTS.find(x => x.id === projectId);
+  if (!p || p.id === "all") return;
+  const c = projectStats(projectId);
+  const agents = ROLES.filter(r => roleRelated(r, projectId));
+  const issues = allIssues().filter(i => i.project === projectId);
+  const detail = document.getElementById("projectDetail");
+  detail.style.display = "block";
+  detail.innerHTML = `
+    <div style="border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <h3 style="font-size:16px;font-weight:600">${p.short}</h3>
+          <p style="font-size:12px;color:var(--text-3);margin-top:2px">${p.full}</p>
+        </div>
+        <button type="button" class="icon-btn" id="openProjInIssues">在 Issues 檢視 →</button>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:12px;font-size:12px;color:var(--text-2)">
+        <span style="color:#f87171;font-weight:600">${c.blocked} 阻塞</span>
+        <span>${c.doing} 進行中</span>
+        <span>${c.todo} 待處理</span>
+        <span>${c.done} 完成</span>
+      </div>
+      <h4 class="sec-h">相關 Agents · ${agents.length}</h4>
+      ${agents.map(r => {
+        const vis = tasksForProject(r, projectId);
+        const st = aggregate(vis.length ? vis : r.tasks);
+        return `<div class="agent-row" data-id="${r.id}">
+          <img src="${catSrc(r.id)}" alt="" />
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:500">${r.person} · <span style="color:${COLOR[st]}">${LABEL[st]}</span></div>
+            <div style="font-size:11px;color:var(--text-3)">${currentTask(r, projectId)?.title || "—"}</div>
+          </div>
+        </div>`;
+      }).join("")}
+      <h4 class="sec-h">Issues · ${issues.length}</h4>
+      <ul class="task-list">
+        ${issues.map(iss => `
+          <li class="${iss.status==="blocked"?"is-blocked":""}">
+            <div class="t-top">
+              <strong>${iss.title}</strong>
+              <span class="badge ${iss.status==="blocked"?"badge-blocked":""}" style="color:${COLOR[iss.status]}">${LABEL[iss.status]}</span>
+            </div>
+            <span class="meta">${iss.agentName} · ${fmtTaipei(iss.updatedAt)}</span>
+            ${iss.blockedReason ? `<div class="br">${iss.blockedReason}</div>` : ""}
+          </li>`).join("")}
+      </ul>
+    </div>`;
+  document.getElementById("openProjInIssues").onclick = () => {
+    filter.linearPanel = "issues";
+    renderLinearPanels();
+    writeHash();
+  };
+  detail.querySelectorAll(".agent-row").forEach(row => {
+    row.onclick = () => openAgent(row.dataset.id, "linear");
+  });
+}
+
+function renderLinearPanels(){
+  const issues = filter.linearPanel === "issues";
+  document.getElementById("panelIssues").classList.toggle("active", issues);
+  document.getElementById("panelProjects").classList.toggle("active", !issues);
+  document.getElementById("linearNavIssues").classList.toggle("active", issues);
+  document.getElementById("linearNavProjects").classList.toggle("active", !issues);
+}
+
+function renderAll(){
+  document.querySelectorAll(".view").forEach(el => {
+    el.classList.toggle("active", el.dataset.view === filter.view);
+  });
+  document.getElementById("tabOffice").classList.toggle("active", filter.view === "office");
+  document.getElementById("tabLinear").classList.toggle("active", filter.view === "linear");
+  document.getElementById("tabOffice").setAttribute("aria-selected", filter.view === "office" ? "true" : "false");
+  document.getElementById("tabLinear").setAttribute("aria-selected", filter.view === "linear" ? "true" : "false");
+  document.getElementById("tabSettings").classList.toggle("active", filter.view === "settings");
+
+  renderTopMeta();
+  renderOfficePills();
+  renderHotspotsAndDock();
+  renderProjList();
+  renderStatusSeg();
+  renderIssuesTable();
+  renderProjCards();
+  renderLinearPanels();
+}
+
+function openCmd(){
+  document.getElementById("cmdBackdrop").classList.add("show");
+  const input = document.getElementById("cmdInput");
+  input.value = filter.query || "";
+  input.focus();
+  renderCmd(input.value);
+}
+function closeCmd(){
+  document.getElementById("cmdBackdrop").classList.remove("show");
+}
+function renderCmd(q){
+  const query = (q || "").trim().toLowerCase();
+  const items = [];
+  items.push({ group: "視圖", label: "Office · 整頁貓辦公室", hint: "view", run: () => setView("office") });
+  items.push({ group: "視圖", label: "Linear · Issues／Projects", hint: "view", run: () => setView("linear") });
+  items.push({ group: "視圖", label: "設定", hint: "view", run: () => setView("settings") });
+  PROJECTS.forEach(p => {
+    items.push({
+      group: "專案",
+      label: p.short + " · " + p.full,
+      hint: "project",
+      run: () => {
+        filter.projectId = p.id;
+        filter.linearPanel = "projects";
+        setView("linear");
+        if (p.id !== "all") showProjectDetail(p.id);
+      }
+    });
+  });
+  ROLES.forEach(r => {
+    items.push({
+      group: "Agent",
+      label: `${r.person}（${r.name}）`,
+      hint: "agent",
+      run: () => openAgent(r.id, filter.view === "linear" ? "linear" : "office")
+    });
+  });
+  allIssues().forEach(iss => {
+    items.push({
+      group: "任務",
+      label: iss.title,
+      hint: iss.project,
+      run: () => {
+        filter.projectId = iss.project;
+        filter.agentId = iss.agentId;
+        filter.linearPanel = "issues";
+        setView("linear");
+        selectedIssueId = iss.id;
+        const role = ROLES.find(r => r.id === iss.agentId);
+        if (role) openLinearAgent(role);
+      }
+    });
+  });
+  const filtered = items.filter(it => !query || it.label.toLowerCase().includes(query) || (it.hint||"").toLowerCase().includes(query));
+  const list = document.getElementById("cmdList");
+  let html = "";
+  let lastGroup = "";
+  filtered.slice(0, 40).forEach((it, i) => {
+    if (it.group !== lastGroup) {
+      html += `<div class="cmd-group">${it.group}</div>`;
+      lastGroup = it.group;
+    }
+    html += `<button type="button" class="cmd-item" data-i="${i}"><span>${it.label}</span><span class="hint">${it.hint||""}</span></button>`;
+  });
+  if (!filtered.length) html = `<div class="cmd-group">無結果</div>`;
+  list.innerHTML = html;
+  list.querySelectorAll(".cmd-item").forEach(btn => {
+    btn.onclick = () => {
+      const it = filtered[+btn.dataset.i];
+      closeCmd();
+      if (query) { filter.query = (q || "").trim(); writeHash(); }
+      it.run();
+      renderAll();
+    };
+  });
+}
+
+document.getElementById("tabOffice").onclick = () => setView("office");
+document.getElementById("tabLinear").onclick = () => setView("linear");
+document.getElementById("tabSettings").onclick = () => setView("settings");
+document.getElementById("backFromSettings").onclick = () => setView("office");
+document.getElementById("officeClose").onclick = closeOfficeDrawer;
+document.getElementById("officeBackdrop").onclick = closeOfficeDrawer;
+document.getElementById("linearClose").onclick = closeLinearDetail;
+document.getElementById("linearNavIssues").onclick = () => {
+  filter.linearPanel = "issues";
+  writeHash();
+  renderLinearPanels();
+};
+document.getElementById("linearNavProjects").onclick = () => {
+  filter.linearPanel = "projects";
+  writeHash();
+  renderLinearPanels();
+  renderProjCards();
+};
+document.getElementById("openCmd").onclick = openCmd;
+document.getElementById("cmdBackdrop").onclick = (e) => {
+  if (e.target.id === "cmdBackdrop") closeCmd();
+};
+document.getElementById("cmdInput").addEventListener("input", e => renderCmd(e.target.value));
+
+document.addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+    e.preventDefault();
+    openCmd();
+  }
+  if (e.key === "Escape") {
+    closeCmd();
+    if (document.getElementById("officeDrawer").classList.contains("open")) closeOfficeDrawer();
+    closeLinearDetail();
+  }
+});
+
+window.addEventListener("hashchange", () => {
+  readHash();
+  renderAll();
+});
+
+readHash();
+if (!location.hash) {
+  filter.view = "office";
+  writeHash();
+}
+renderAll();
+</script>
+</body>
+</html>
