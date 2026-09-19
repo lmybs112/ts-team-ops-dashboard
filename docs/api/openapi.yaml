@@ -8,9 +8,18 @@ info:
 
     **MVP 不做** GitHub Issues／PR 同步（ADR-004）。
 
-    認證：`Authorization: Bearer <token>`。MVP 可簡化為內網／假登入，
-    但行為規則（權限／冪等／blockedReason）必須可測。範例 token 僅為 placeholder，
+    認證：所有**寫入**與（預設）讀取皆須 `Authorization: Bearer <token>`（**S-H2**）。
+    MVP 可簡化為內網／假登入，但行為規則必須可測。範例 token 僅為 placeholder，
     **禁止**把真實密鑰寫進本文件。
+
+    ## 資安硬性（Sprint 0｜S-H1／S-H2）
+
+    - **S-H1 token→role 綁定**：授權身分只來自 Bearer token 的 `actorId`／`roleId`。
+      對職缺 bot，伺服器以 token role **覆蓋／忽略** body 的 `assigneeRole` 作為寫入授權來源；
+      若 body 帶了與 token 不符的 `assigneeRole` → **403** `FORBIDDEN_ASSIGNEE`，**不寫入**
+      （防偽造；驗證：bot-A token + `assigneeRole=backend` → 403，DB 不變）。
+    - **S-H2 強制 Bearer**：`POST`／`PATCH`／`DELETE`／`POST /ingest` 缺或無效 Bearer → **401**
+      `UNAUTHENTICATED`。**禁止 UI-only RBAC**（前端角色切換不得當成授權；繞過 UI 直打 API 仍受伺服器約束）。
   contact:
     name: backend
   license:
@@ -222,10 +231,15 @@ paths:
         **冪等鍵**：`source` + `sourceRef`（兩者皆必填且非空）。
         相同鍵重送 → 回傳既有 Issue（`200`），不重複建立；首次建立 → `201`。
 
-        權限：
+        權限（**S-H1／S-H2**）：
+        - **強制 Bearer**：無／無效 token → 401（S-H2）
         - Token 身分必須是職缺 bot（或 mei／CTO 代送）
-        - 職缺 bot 的 token role **必須**等於 body.`assigneeRole`，否則 403
+        - **token→role 綁定**：職缺 bot 的授權角色＝token `roleId`；
+          body.`assigneeRole` **不得提升權限**。伺服器以 token role 覆蓋／忽略 body 自稱；
+          若 body.`assigneeRole` 存在且 ≠ token role → **403** `FORBIDDEN_ASSIGNEE`，不寫入
+        - 持久化的 `assigneeRole` 必須等於 token role（bot）或 mei／CTO 代送時顯式指定且可審核
         - **禁止**透過 ingest 改寫他人任務（即使冪等鍵撞到別人的 Issue → 403）
+        - **禁止 UI-only RBAC**：前端「切換角色」不能繞過本規則
 
         驗證：
         - `status=blocked` 且缺／空 `blockedReason` → **400**，不寫入
@@ -296,9 +310,11 @@ components:
       scheme: bearer
       bearerFormat: opaque
       description: |
-        MVP token 須能解析出 actor：
+        MVP token 須能解析出 actor（**S-H1 綁定來源**）：
         - `kind`: `human` | `bot`
         - `actorId`: `mei` | `cto` | roleId（七職缺之一）
+        職缺 bot：`actorId` ≡ 其 `roleId`；伺服器以此為唯一授權角色，
+        **不得**信任 body／query／UI 傳來的角色自稱。
         真實密鑰不得寫入文件／repo。
 
   parameters:
@@ -578,7 +594,11 @@ components:
         projectSlug:
           $ref: "#/components/schemas/ProjectSlug"
         assigneeRole:
-          $ref: "#/components/schemas/RoleId"
+          allOf:
+            - $ref: "#/components/schemas/RoleId"
+          description: |
+            **非授權來源（S-H1）**。職缺 bot：必須與 token `roleId` 一致，否則 403；
+            伺服器以 token role 為準（覆蓋／忽略自稱）。mei／CTO 代送時可指定目標 role。
         title:
           type: string
           minLength: 1
