@@ -2,7 +2,7 @@
 
 | 欄位 | 內容 |
 |------|------|
-| 對齊 | PRD v1.3 §6、ADR-002／003、資安審查 S-H1／S-H2 |
+| 對齊 | PRD v1.3 §6、ADR-002／003、資安 S-H1／S-H2＋FU-H1b／FU-H2a |
 | 契約 | [`openapi.yaml`](./openapi.yaml) |
 | 狀態 | Sprint 0 文件；實作須有紅燈測試覆蓋本文件案例 |
 
@@ -16,7 +16,7 @@
 | `cto` | human／bot | 指揮窗口；與 mei 同權 |
 | `pm` / `uiux` / `frontend` / `backend` / `qa` / `devops` | bot | 職缺 bot；僅能動自己的任務 |
 
-MVP 認證可簡化（內網／假登入／單一 Bearer），但 **授權規則必須可測**。Token 不得寫進 repo／本文件當真值。
+MVP 認證可簡化（內網／假登入／**每 actor 一 Bearer**），但 **授權規則必須可測**。 **禁止**全 bot 共用一把神鑰（FU-H1b）。Token 不得寫進 repo／本文件當真值。
 
 ---
 
@@ -36,17 +36,21 @@ MVP 認證可簡化（內網／假登入／單一 Bearer），但 **授權規則
 2. **Bot 不可改指派**：`PATCH` 若包含 `assigneeRole` 且呼叫者為職缺 bot → `403` `FORBIDDEN_OPERATION`（改指派僅 mei／CTO）。
 3. **Blocked 必填原因**：寫入後 `status=blocked` 時，`blockedReason` 必須非空且 ≤120 字；否則 `400` `BLOCKED_REASON_REQUIRED`，**不寫入**。
 4. **Ingest 冪等**：鍵 = `source` + `sourceRef`。相同鍵重送 → HTTP `200` + 既有 Issue，不重複建立；首次 → `201`。
-5. **Ingest 身分綁定（S-H1）**：授權角色只來自 Bearer token。職缺 bot：body.`assigneeRole` 若存在且 ≠ token role → `403`；伺服器以 token role **覆蓋／忽略** body 自稱，**不得**把 body 當授權依據。
+5. **Ingest 身分綁定（S-H1／FU-H1b／FU-H2a）**：授權角色只來自 **該 role 獨立** Bearer token（禁共用神鑰）。職缺 bot：body.`assigneeRole` 若存在且 ≠ token role → `403`；伺服器以 token role **覆蓋／忽略** body 自稱。**不得**把 body／`X-Role`／`X-Actor*` 當授權依據。
 6. **禁止 GitHub sync（MVP）**：`source=github` 寫入 → `400` `SOURCE_NOT_ALLOWED`。不得實作 GitHub Issues／PR 同步。
 
 ### 2.2 資安硬性 S-H1／S-H2（條件放行）
 
 | ID | 規則 | 契約要求 | 驗證 |
 |----|------|----------|------|
-| **S-H1** | token→role 綁定 | 每 bot 獨立 token（或 JWT `roleId`）；寫入授權只信 token；body `assigneeRole` 不可提權 | bot-A token + body `assigneeRole=backend` → **403**，DB 不變 |
-| **S-H2** | 全寫入強制 Bearer；禁 UI-only RBAC | `POST`／`PATCH`／`DELETE`／`POST /ingest` 無 Authorization → **401**；前端角色切換不是授權 | 無 Bearer 打任一寫入 → 401；繞過 UI 直打 API 仍 401／403 |
+| **S-H1** | token→role 綁定 | 寫入授權只信 token；body `assigneeRole` 不可提權；伺服器覆蓋／忽略 body 自稱 | bot-A token + body `assigneeRole=backend` → **403**，DB 不變 |
+| **FU-H1b** | 禁止共用神鑰 | **不可**同一 opaque token（或可解析為多 role 的密）代表多個職缺 bot；**每 bot 一 token**，或 JWT 僅含單一 `roleId`；輪替時舊 token 立即失效 | 故意核發「可同時通過 frontend＋backend」的共用密 → **拒絕核發**，或跨 role 寫入 → **401／403**，DB 不變（**P19**） |
+| **S-H2** | 全寫入強制 Bearer；禁 UI-only RBAC | `POST`／`PATCH`／`DELETE`／`POST /ingest` 無 Authorization → **401**（P16–P17）；前端角色切換不是授權 | 無 Bearer → 401；繞過 UI 直打 API 仍 401／403 |
+| **FU-H2a** | 禁 X-Role／自報身份 | 授權身分只來自 `Authorization: Bearer`；禁止 `X-Role`／`X-Actor`／`X-Actor-Id`／`X-User-Id` 或 body 自報身份當授權（忽略、不提權）；假登入只換發綁定 Bearer | 無 Bearer（或 frontend token）＋`X-Role: cto` → **401** 或仍為 frontend 權限，**不得**升成 mei／CTO；DB 不變（**P20**） |
 
 **禁止**：只靠前端隱藏按鈕／下拉切角色當 RBAC（S-M4／S-H2）。
+**禁止**：全 bot 共用神鑰（FU-H1b）。
+**禁止**：`X-Role`／`X-Actor*`／body 自報身份當授權（FU-H2a）。
 
 ---
 
@@ -61,7 +65,7 @@ MVP 認證可簡化（內網／假登入／單一 Bearer），但 **授權規則
 | 400 | `IDEMPOTENCY_KEY_REQUIRED` | ingest 缺 `source` 或 `sourceRef` | 否 |
 | 400 | `SOURCE_NOT_ALLOWED` | MVP 寫入 `github` 等未開放來源 | 否 |
 | 401 | `UNAUTHENTICATED` | 缺／無效 token | 否 |
-| 403 | `FORBIDDEN_ASSIGNEE` | bot 改他人任務；或 ingest／寫入 body.`assigneeRole` ≠ token role（S-H1 偽造） | 否 |
+| 403 | `FORBIDDEN_ASSIGNEE` | bot 改他人任務；body.`assigneeRole` ≠ token role（S-H1）；或憑 `X-Role`／自報身份提權（FU-H2a） | 否 |
 | 403 | `FORBIDDEN_OPERATION` | bot 打 CRUD 建立／刪除／改指派 | 否 |
 | 404 | `ISSUE_NOT_FOUND` | id 不存在 | 否 |
 | 409 | `IDEMPOTENCY_CONFLICT` | 同冪等鍵但 payload 與既有紀錄語意衝突（可選；建議實作時定義：title／status 等關鍵欄不同） | 否 |
@@ -102,8 +106,10 @@ MVP 認證可簡化（內網／假登入／單一 Bearer），但 **授權規則
 | P16 | **S-H2** 無 `Authorization` 呼叫 `POST /issues` | 401 `UNAUTHENTICATED` |
 | P17 | **S-H2** 無 `Authorization` 呼叫 `POST /ingest`／`PATCH`／`DELETE` | 401 |
 | P18 | **S-H2** 僅改 UI 假角色、仍用 frontend bot token 打他人任務 | 403（UI 切換無效；禁 UI-only RBAC） |
+| P19 | **FU-H1b** 故意核發可同時通過 frontend＋backend 驗證的共用密，用以 ingest／PATCH 跨 role | **拒絕核發**（設定層）或任一跨 role 寫入 → **401／403**，DB 不變 |
+| P20 | **FU-H2a** 無 Bearer（或 frontend token）＋`X-Role: cto`／`X-Actor: mei` 呼叫 `POST /issues` 或 `POST /ingest` | **401**（無／錯 Bearer）或仍為 frontend 權限（**不得**升成 mei／CTO）；DB 不變 |
 
-實作前由單元／TDD 職缺把 **P1–P18** 寫成失敗測試；後端實作僅在紅燈存在後進行。S-H1／S-H2 為資安條件放行硬性項。
+實作前由單元／TDD 職缺把 **P1–P20** 寫成失敗測試；後端實作僅在紅燈存在後進行。S-H1／S-H2／FU-H1b／FU-H2a 為資安條件放行硬性項。
 
 ---
 

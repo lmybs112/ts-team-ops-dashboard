@@ -12,14 +12,19 @@ info:
     MVP 可簡化為內網／假登入，但行為規則必須可測。範例 token 僅為 placeholder，
     **禁止**把真實密鑰寫進本文件。
 
-    ## 資安硬性（Sprint 0｜S-H1／S-H2）
+    ## 資安硬性（Sprint 0｜S-H1／S-H2＋FU-H1b／FU-H2a）
 
     - **S-H1 token→role 綁定**：授權身分只來自 Bearer token 的 `actorId`／`roleId`。
       對職缺 bot，伺服器以 token role **覆蓋／忽略** body 的 `assigneeRole` 作為寫入授權來源；
       若 body 帶了與 token 不符的 `assigneeRole` → **403** `FORBIDDEN_ASSIGNEE`，**不寫入**
       （防偽造；驗證：bot-A token + `assigneeRole=backend` → 403，DB 不變）。
+    - **FU-H1b 禁止共用神鑰**：不可用同一 opaque token（或同一組可解析為多 role 的密）代表多個職缺 bot。
+      **每 bot 一 token**，或 JWT 僅含單一 `roleId`。運維輪替時舊 token 立即失效。
     - **S-H2 強制 Bearer**：`POST`／`PATCH`／`DELETE`／`POST /ingest` 缺或無效 Bearer → **401**
       `UNAUTHENTICATED`。**禁止 UI-only RBAC**（前端角色切換不得當成授權；繞過 UI 直打 API 仍受伺服器約束）。
+    - **FU-H2a 禁止 header／body 自報身份**：授權身分只來自 `Authorization: Bearer`。
+      禁止以 `X-Role`／`X-Actor`／`X-Actor-Id`／`X-User-Id` 或任何非 Bearer 欄位自報身份；
+      此類 header／body 欄位 **忽略或不作為授權依據**（不得因帶 X-Role 就提權）。假登入只能換發已綁定 Bearer。
   contact:
     name: backend
   license:
@@ -231,12 +236,13 @@ paths:
         **冪等鍵**：`source` + `sourceRef`（兩者皆必填且非空）。
         相同鍵重送 → 回傳既有 Issue（`200`），不重複建立；首次建立 → `201`。
 
-        權限（**S-H1／S-H2**）：
-        - **強制 Bearer**：無／無效 token → 401（S-H2）
-        - Token 身分必須是職缺 bot（或 mei／CTO 代送）
+        權限（**S-H1／S-H2／FU-H1b／FU-H2a**）：
+        - **強制 Bearer**：無／無效 token → 401（S-H2；P16–P17）
+        - Token 身分必須是職缺 bot（或 mei／CTO 代送）；**每 role 獨立 token**（FU-H1b），禁共用神鑰
         - **token→role 綁定**：職缺 bot 的授權角色＝token `roleId`；
           body.`assigneeRole` **不得提升權限**。伺服器以 token role 覆蓋／忽略 body 自稱；
           若 body.`assigneeRole` 存在且 ≠ token role → **403** `FORBIDDEN_ASSIGNEE`，不寫入
+        - **禁止** `X-Role`／`X-Actor*`／body 自報身份當授權（FU-H2a）
         - 持久化的 `assigneeRole` 必須等於 token role（bot）或 mei／CTO 代送時顯式指定且可審核
         - **禁止**透過 ingest 改寫他人任務（即使冪等鍵撞到別人的 Issue → 403）
         - **禁止 UI-only RBAC**：前端「切換角色」不能繞過本規則
@@ -310,11 +316,13 @@ components:
       scheme: bearer
       bearerFormat: opaque
       description: |
-        MVP token 須能解析出 actor（**S-H1 綁定來源**）：
+        MVP token 須能解析出 actor（**S-H1／FU-H1b 綁定來源**）：
         - `kind`: `human` | `bot`
         - `actorId`: `mei` | `cto` | roleId（七職缺之一）
-        職缺 bot：`actorId` ≡ 其 `roleId`；伺服器以此為唯一授權角色，
-        **不得**信任 body／query／UI 傳來的角色自稱。
+        職缺 bot：`actorId` ≡ 其 `roleId`；**每 bot／role 一憑證**（FU-H1b），禁止全 bot 共用神鑰。
+        伺服器以此為唯一授權角色。
+        **不得**信任 body／query／UI／`X-Role`／`X-Actor`／`X-Actor-Id`／`X-User-Id` 自稱（FU-H2a）。
+        假登入只能換發此類綁定 Bearer。
         真實密鑰不得寫入文件／repo。
 
   parameters:
