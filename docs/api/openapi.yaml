@@ -1,0 +1,647 @@
+openapi: 3.1.0
+info:
+  title: Team HQ Ops API
+  version: 0.1.0
+  summary: Issues CRUD + bot ingest（對齊 PRD v1.3／ADR-002／ADR-003）
+  description: |
+    單一 Issue 資料源（ADR-002）。Web Client 與 bot ingest 寫入同一 Task DB。
+
+    **MVP 不做** GitHub Issues／PR 同步（ADR-004）。
+
+    認證：`Authorization: Bearer <token>`。MVP 可簡化為內網／假登入，
+    但行為規則（權限／冪等／blockedReason）必須可測。範例 token 僅為 placeholder，
+    **禁止**把真實密鑰寫進本文件。
+  contact:
+    name: backend
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://{host}/v1
+    description: Ops API v1（路徑前綴可調，契約不變）
+    variables:
+      host:
+        default: api.example.invalid
+        description: 部署主機（placeholder，非真實環境）
+
+tags:
+  - name: Issues
+    description: Issue CRUD（單一真相庫）
+  - name: Ingest
+    description: 職缺 bot 結構化回報（冪等）
+  - name: Meta
+    description: 健康檢查等
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Meta]
+      summary: 健康檢查
+      operationId: getHealth
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /issues:
+    get:
+      tags: [Issues]
+      summary: 列出 Issues
+      operationId: listIssues
+      description: |
+        讀取單一 Issue 資料源。篩選欄位對齊全域 Filter State
+        （`projectSlug`／`assigneeRole`／`status`／`query`）。
+      parameters:
+        - $ref: "#/components/parameters/ProjectSlugQuery"
+        - $ref: "#/components/parameters/AssigneeRoleQuery"
+        - $ref: "#/components/parameters/StatusQuery"
+        - name: query
+          in: query
+          required: false
+          description: 標題關鍵字（大小寫不敏感子字串）
+          schema:
+            type: string
+            maxLength: 200
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: cursor
+          in: query
+          required: false
+          description: 分頁游標（opaque）
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Issue 列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssueListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Issues]
+      summary: 建立 Issue
+      operationId: createIssue
+      description: |
+        僅 **mei**／**CTO** 可建立。職缺 bot 請走 `POST /ingest`。
+        `status=blocked` 時 `blockedReason` 必填（非空、≤120 字），否則 400。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueCreateRequest"
+            examples:
+              todo:
+                summary: 建立待辦
+                value:
+                  title: 完成商品卡 hover 狀態
+                  projectSlug: marketing
+                  assigneeRole: frontend
+                  status: todo
+              blocked:
+                summary: 建立阻塞（含原因）
+                value:
+                  title: 等待設計稿
+                  projectSlug: marketing
+                  assigneeRole: frontend
+                  status: blocked
+                  blockedReason: 缺 hover 規格
+      responses:
+        "201":
+          description: 已建立
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /issues/{issueId}:
+    parameters:
+      - $ref: "#/components/parameters/IssueIdPath"
+
+    get:
+      tags: [Issues]
+      summary: 取得單一 Issue
+      operationId: getIssue
+      responses:
+        "200":
+          description: Issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    patch:
+      tags: [Issues]
+      summary: 更新 Issue
+      operationId: updateIssue
+      description: |
+        部分更新。權限（PRD §6.3／ADR-003）：
+
+        - **mei**／**CTO**：可改全部欄位（含指派）
+        - **職缺 bot**：僅當目標 Issue 的 `assigneeRole`＝自己的 role 時可改；
+          **不得**改他人任務；**不得**把 `assigneeRole` 改成別人（403）
+        - `status=blocked`（寫入後狀態）必須有非空 `blockedReason` ≤120 字
+
+        離開 `blocked` 時可清掉 `blockedReason`（設為 null）。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueUpdateRequest"
+      responses:
+        "200":
+          description: 已更新
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Issues]
+      summary: 刪除 Issue
+      operationId: deleteIssue
+      description: |
+        僅 **mei**／**CTO** 可刪除。職缺 bot → 403。
+      responses:
+        "204":
+          description: 已刪除
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /ingest:
+    post:
+      tags: [Ingest]
+      summary: Bot ingest（冪等）
+      operationId: ingestBotReport
+      description: |
+        職缺 bot 事件驅動回報（ADR-003）。
+
+        **冪等鍵**：`source` + `sourceRef`（兩者皆必填且非空）。
+        相同鍵重送 → 回傳既有 Issue（`200`），不重複建立；首次建立 → `201`。
+
+        權限：
+        - Token 身分必須是職缺 bot（或 mei／CTO 代送）
+        - 職缺 bot 的 token role **必須**等於 body.`assigneeRole`，否則 403
+        - **禁止**透過 ingest 改寫他人任務（即使冪等鍵撞到別人的 Issue → 403）
+
+        驗證：
+        - `status=blocked` 且缺／空 `blockedReason` → **400**，不寫入
+        - 非法 `assigneeRole`／`projectSlug` → **400**
+        - `source` MVP 僅允許 `bot_report`（`github` 保留，MVP 寫入 → 400）
+
+        **禁止**在本契約範例中填入真實 API key／secret。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestRequest"
+            examples:
+              done:
+                summary: 完成回報
+                value:
+                  projectSlug: marketing
+                  assigneeRole: frontend
+                  title: 完成商品卡 hover 狀態
+                  status: done
+                  source: bot_report
+                  sourceRef: agent:frontend:task-123
+                  blockedReason: null
+              blocked:
+                summary: 阻塞回報
+                value:
+                  projectSlug: team-ops
+                  assigneeRole: backend
+                  title: OpenAPI 契約
+                  status: blocked
+                  source: bot_report
+                  sourceRef: agent:backend:sprint0-openapi
+                  blockedReason: 等待架構師補 ADR 細節
+              idempotentReplay:
+                summary: 重送（同冪等鍵）
+                value:
+                  projectSlug: marketing
+                  assigneeRole: frontend
+                  title: 完成商品卡 hover 狀態
+                  status: done
+                  source: bot_report
+                  sourceRef: agent:frontend:task-123
+      responses:
+        "200":
+          description: 冪等命中 — 回傳既有 Issue（未重複寫入）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestResponse"
+        "201":
+          description: 新建 Issue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: |
+        MVP token 須能解析出 actor：
+        - `kind`: `human` | `bot`
+        - `actorId`: `mei` | `cto` | roleId（七職缺之一）
+        真實密鑰不得寫入文件／repo。
+
+  parameters:
+    IssueIdPath:
+      name: issueId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/IssueId"
+    ProjectSlugQuery:
+      name: projectSlug
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/ProjectSlug"
+    AssigneeRoleQuery:
+      name: assigneeRole
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/RoleId"
+    StatusQuery:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/IssueStatus"
+
+  responses:
+    BadRequest:
+      description: 驗證失敗（不寫入）
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            blockedReasonRequired:
+              summary: blocked 缺原因
+              value:
+                error:
+                  code: BLOCKED_REASON_REQUIRED
+                  message: status=blocked requires non-empty blockedReason (≤120 chars)
+                  details:
+                    field: blockedReason
+            invalidEnum:
+              summary: 非法 enum
+              value:
+                error:
+                  code: INVALID_ENUM
+                  message: Invalid projectSlug or assigneeRole
+                  details:
+                    field: projectSlug
+            idempotencyKeyRequired:
+              summary: ingest 缺冪等鍵
+              value:
+                error:
+                  code: IDEMPOTENCY_KEY_REQUIRED
+                  message: source and sourceRef are required for ingest
+    Unauthorized:
+      description: 未認證
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            missingToken:
+              value:
+                error:
+                  code: UNAUTHENTICATED
+                  message: Missing or invalid bearer token
+    Forbidden:
+      description: 已認證但無權
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            botCannotEditOthers:
+              summary: bot 不可改他人
+              value:
+                error:
+                  code: FORBIDDEN_ASSIGNEE
+                  message: Bot may only mutate issues assigned to its own role
+                  details:
+                    actorRole: frontend
+                    issueAssigneeRole: backend
+            botCannotCreateViaCrud:
+              summary: bot 不可用 CRUD 建立
+              value:
+                error:
+                  code: FORBIDDEN_OPERATION
+                  message: Bots must use POST /ingest to create or upsert reports
+    NotFound:
+      description: 資源不存在
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          examples:
+            issueMissing:
+              value:
+                error:
+                  code: ISSUE_NOT_FOUND
+                  message: Issue not found
+
+  schemas:
+    IssueId:
+      type: string
+      minLength: 1
+      maxLength: 64
+      description: 系統產生的 Issue id（opaque）
+      examples: ["iss_01HZXEXAMPLE"]
+
+    ProjectSlug:
+      type: string
+      enum: [marketing, iframe, carousel, try-on, llm-chat, team-ops]
+      description: 六專案之一（PRD §2.2）
+
+    RoleId:
+      type: string
+      enum: [cto, pm, uiux, frontend, backend, qa, devops]
+      description: 七職缺 roleId（PRD §3）
+
+    IssueStatus:
+      type: string
+      enum: [todo, doing, blocked, done]
+      description: 固定四態（不可自訂）
+
+    IssueSource:
+      type: string
+      enum: [manual, bot_report, github]
+      description: |
+        `manual`｜`bot_report` 為 MVP 可寫入；
+        `github` 保留 enum，**MVP 不得寫入**（寫入 → 400）。
+
+    IsoDateTime:
+      type: string
+      format: date-time
+      description: ISO-8601；UI 顯示轉 Asia/Taipei
+      examples: ["2026-09-19T06:00:00.000Z"]
+
+    BlockedReason:
+      type: string
+      minLength: 1
+      maxLength: 120
+      description: blocked 必填原因（≤120 字）
+
+    ActorId:
+      type: string
+      minLength: 1
+      maxLength: 64
+      description: 操作者識別（mei／cto／roleId／系統 id）
+      examples: ["mei", "cto", "frontend"]
+
+    Issue:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - projectSlug
+        - assigneeRole
+        - status
+        - source
+        - updatedAt
+        - updatedBy
+      properties:
+        id:
+          $ref: "#/components/schemas/IssueId"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        projectSlug:
+          $ref: "#/components/schemas/ProjectSlug"
+        assigneeRole:
+          $ref: "#/components/schemas/RoleId"
+        status:
+          $ref: "#/components/schemas/IssueStatus"
+        blockedReason:
+          oneOf:
+            - $ref: "#/components/schemas/BlockedReason"
+            - type: "null"
+          description: status=blocked 時必為非空字串；其餘可為 null
+        source:
+          $ref: "#/components/schemas/IssueSource"
+        sourceRef:
+          oneOf:
+            - type: string
+              minLength: 1
+              maxLength: 200
+            - type: "null"
+          description: 來源參照；ingest 時與 source 組成冪等鍵
+        createdAt:
+          $ref: "#/components/schemas/IsoDateTime"
+        updatedAt:
+          $ref: "#/components/schemas/IsoDateTime"
+        updatedBy:
+          $ref: "#/components/schemas/ActorId"
+
+    IssueCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [title, projectSlug, assigneeRole, status]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        projectSlug:
+          $ref: "#/components/schemas/ProjectSlug"
+        assigneeRole:
+          $ref: "#/components/schemas/RoleId"
+        status:
+          $ref: "#/components/schemas/IssueStatus"
+        blockedReason:
+          oneOf:
+            - $ref: "#/components/schemas/BlockedReason"
+            - type: "null"
+        source:
+          $ref: "#/components/schemas/IssueSource"
+          default: manual
+          description: CRUD 建立預設 `manual`；不得為 `github`
+        sourceRef:
+          oneOf:
+            - type: string
+              minLength: 1
+              maxLength: 200
+            - type: "null"
+
+    IssueUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        projectSlug:
+          $ref: "#/components/schemas/ProjectSlug"
+        assigneeRole:
+          $ref: "#/components/schemas/RoleId"
+          description: 職缺 bot 不得變更此欄（改指派僅 mei／CTO）
+        status:
+          $ref: "#/components/schemas/IssueStatus"
+        blockedReason:
+          oneOf:
+            - $ref: "#/components/schemas/BlockedReason"
+            - type: "null"
+
+    IssueListResponse:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Issue"
+        nextCursor:
+          oneOf:
+            - type: string
+            - type: "null"
+
+    IngestRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - projectSlug
+        - assigneeRole
+        - title
+        - status
+        - source
+        - sourceRef
+      properties:
+        projectSlug:
+          $ref: "#/components/schemas/ProjectSlug"
+        assigneeRole:
+          $ref: "#/components/schemas/RoleId"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        status:
+          $ref: "#/components/schemas/IssueStatus"
+        source:
+          type: string
+          enum: [bot_report]
+          description: MVP ingest 僅允許 bot_report
+        sourceRef:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: 與 source 組成冪等鍵；建議穩定、可重送
+          examples: ["agent:frontend:task-123"]
+        blockedReason:
+          oneOf:
+            - $ref: "#/components/schemas/BlockedReason"
+            - type: "null"
+
+    IngestResponse:
+      type: object
+      additionalProperties: false
+      required: [issue, idempotentReplay]
+      properties:
+        issue:
+          $ref: "#/components/schemas/Issue"
+        idempotentReplay:
+          type: boolean
+          description: true 表示冪等命中（HTTP 200）；false 表示新建（HTTP 201）
+
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+
+    ErrorBody:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: 機器可讀錯誤碼（見 docs/api/permissions-and-errors.md）
+          examples:
+            - BLOCKED_REASON_REQUIRED
+            - FORBIDDEN_ASSIGNEE
+            - IDEMPOTENCY_KEY_REQUIRED
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
