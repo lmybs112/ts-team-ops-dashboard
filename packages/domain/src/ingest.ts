@@ -1,7 +1,3 @@
-/**
- * Ingest contract validation stubs (PRD §6.4).
- */
-
 export type IngestPayload = {
   projectSlug: string;
   assigneeRole: string;
@@ -45,18 +41,81 @@ export const ASSIGNEE_ROLES = [
   "devops",
 ] as const;
 
-/**
- * Validate ingest payload shape / enums / blocked reason.
- * Stub: always throws.
- */
-export function validateIngestPayload(_payload: Partial<IngestPayload>): IngestValidationResult {
-  throw new Error("not implemented: validateIngestPayload (PRD §6.4)");
+const STATUSES = ["todo", "doing", "blocked", "done"] as const;
+
+export function ingestIdempotencyKey(source: string, sourceRef: string): string {
+  return `${source}:${sourceRef}`;
 }
 
-/**
- * Idempotency key = source + sourceRef.
- * Stub: always throws.
- */
-export function ingestIdempotencyKey(_source: string, _sourceRef: string): string {
-  throw new Error("not implemented: ingestIdempotencyKey (PRD §6.4)");
+export function validateIngestPayload(
+  payload: Partial<IngestPayload>,
+): IngestValidationResult {
+  const source = payload.source ?? "";
+  const sourceRef = payload.sourceRef ?? "";
+  if (!source || !sourceRef) {
+    return {
+      ok: false,
+      httpStatus: 400,
+      code: "IDEMPOTENCY_KEY_REQUIRED",
+      message: "source and sourceRef are required",
+    };
+  }
+  if (source === "github") {
+    return {
+      ok: false,
+      httpStatus: 400,
+      code: "SOURCE_NOT_ALLOWED",
+      message: "github source not allowed in MVP",
+    };
+  }
+  if (
+    !payload.projectSlug ||
+    !(PROJECT_SLUGS as readonly string[]).includes(payload.projectSlug)
+  ) {
+    return {
+      ok: false,
+      httpStatus: 400,
+      code: "INVALID_ENUM",
+      message: "invalid projectSlug",
+    };
+  }
+  if (
+    !payload.assigneeRole ||
+    !(ASSIGNEE_ROLES as readonly string[]).includes(payload.assigneeRole)
+  ) {
+    return {
+      ok: false,
+      httpStatus: 400,
+      code: "INVALID_ENUM",
+      message: "invalid assigneeRole",
+    };
+  }
+  if (!payload.status || !(STATUSES as readonly string[]).includes(payload.status)) {
+    return {
+      ok: false,
+      httpStatus: 400,
+      code: "INVALID_ENUM",
+      message: "invalid status",
+    };
+  }
+  if (!payload.title || payload.title.trim().length === 0) {
+    return {
+      ok: false,
+      httpStatus: 400,
+      code: "VALIDATION_FAILED",
+      message: "title is required",
+    };
+  }
+  if (payload.status === "blocked") {
+    const reason = payload.blockedReason;
+    if (reason == null || reason.trim().length === 0) {
+      return {
+        ok: false,
+        httpStatus: 400,
+        code: "BLOCKED_REASON_REQUIRED",
+        message: "blocked requires blockedReason",
+      };
+    }
+  }
+  return { ok: true };
 }
