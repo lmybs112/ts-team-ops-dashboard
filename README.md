@@ -12,14 +12,15 @@ Team HQ — Office ∥ Linear 雙視圖進度管理平台（PRD v1.3）。
 - [Prototype 操作說明](prototype/PROTO.md)
 - [權限與錯誤碼（P1–P20）](docs/api/permissions-and-errors.md)
 - [OpenAPI](docs/api/openapi.yaml)
-- [Sprint 0 TDD RED](docs/sprint-0.md)
+- [Sprint 0 TDD](docs/sprint-0.md)
+- [Filter State 不變式](docs/architecture/data-model-and-filter-state.md)
 
-## Monorepo（Sprint 0）
+## Monorepo
 
 ```
-packages/domain        # 領域 stubs + 紅燈單元測試
-packages/api-contract  # 契約 stubs + P1–P20 紅燈測試
-apps/web               # Next.js placeholder
+packages/domain        # 領域邏輯 + 單元測試
+packages/api-contract  # Ops API 契約 + in-memory createOpsApi
+apps/web               # Next.js Office ∥ Linear shell
 prototype/             # 靜態原型
 docs/                  # PRD / ADR / API
 ```
@@ -28,13 +29,13 @@ docs/                  # PRD / ADR / API
 
 ```bash
 pnpm install
-pnpm test          # expect RED（Sprint 0 門檻）
+pnpm test              # domain + api-contract + web unit tests
 pnpm typecheck
 pnpm lint
+
+# Web app
+pnpm --filter @team-hq/web dev     # http://localhost:3000
+pnpm --filter @team-hq/web build
 ```
 
-詳見 [docs/sprint-0.md](docs/sprint-0.md)。綠燈實作不在本階段範圍。
-
-## 專案狀態
-
-Sprint 0：TDD 紅燈 scaffold（domain 五優先 + P1–P20）。實作待紅燈存在後進行。
+詳見 [apps/web/README.md](apps/web/README.md)。

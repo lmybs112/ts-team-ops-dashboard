@@ -8,6 +8,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/.next/**",
       "prototype/**",
+      "apps/web/next-env.d.ts",
     ],
   },
   js.configs.recommended,

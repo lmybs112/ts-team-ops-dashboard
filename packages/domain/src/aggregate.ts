@@ -31,7 +31,7 @@ export function aggregateAgentStatus(
   if (blocked.length > 0) {
     const newest = [...blocked].sort((a, b) =>
       a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0,
-    )[0];
+    )[0]!;
     const raw = newest.blockedReason ?? "";
     const summary =
       raw.length > BLOCKED_SUMMARY_MAX ? raw.slice(0, BLOCKED_SUMMARY_MAX) : raw;

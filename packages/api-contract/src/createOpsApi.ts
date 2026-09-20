@@ -88,7 +88,7 @@ function extractBearer(auth: AuthContext): string | null {
   if (raw == null || raw === "") return null;
   const m = /^Bearer\s+(.+)$/i.exec(raw.trim());
   if (!m) return null;
-  const token = m[1].trim();
+  const token = m[1]!.trim();
   return token.length > 0 ? token : null;
 }
 
@@ -282,7 +282,7 @@ export function createOpsApi(): OpsApi {
       return ok(201, { issue, idempotentReplay: false });
     },
 
-    issueSharedGodToken(roles) {
+    issueSharedGodToken(_roles) {
       // FU-H1b: refuse multi-role shared god keys
       return {
         rejected: true,
