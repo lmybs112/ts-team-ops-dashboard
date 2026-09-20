@@ -3,13 +3,13 @@
 import { useMemo } from "react";
 import { aggregateAgentStatus } from "@team-hq/domain";
 import { useFilter } from "../filters/FilterProvider";
+import { useIssues } from "../hooks/useIssues";
 import { AGENT_ROLES, AGENTS, STATUS_COLOR } from "../lib/constants";
 import { filterIssues } from "../lib/filter-issues";
-import { listAllIssues } from "../lib/ops-client";
 
 export function OfficeView() {
   const { state, setState } = useFilter();
-  const issues = useMemo(() => listAllIssues(), []);
+  const issues = useIssues();
 
   const scoped = useMemo(() => {
     // Office cards: apply project/status/query; agent filter highlights selection
@@ -21,6 +21,7 @@ export function OfficeView() {
       <h1 className="view-title">辦公室</h1>
       <p className="muted">
         點選 Agent 設定篩選；切到 Linear 時列表會保留相同 Filter State。
+        改狀態請至 Linear 詳情（Finding-002）。
       </p>
       <div className="agent-grid">
         {AGENT_ROLES.map((role) => {
