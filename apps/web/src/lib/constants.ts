@@ -33,7 +33,7 @@ export const STATUS_COLOR: Record<IssueStatus, string> = {
   todo: "#6b7280",
   doing: "#2563eb",
   blocked: "#dc2626",
-  done: "#16a34a",
+  done: "#15803d",
 };
 
 export const AGENT_ROLES: readonly AssigneeRole[] = [
