@@ -5,6 +5,8 @@ export default defineConfig({
     include: [
       "packages/**/src/**/*.test.ts",
       "packages/**/tests/**/*.test.ts",
+      "apps/web/**/*.test.ts",
+      "apps/web/**/*.test.tsx",
     ],
     environment: "node",
     reporters: ["default"],

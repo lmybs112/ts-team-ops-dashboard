@@ -3,9 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "typecheck": "tsc -b --pretty false"
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run --config ../../vitest.config.ts"
   },
   "dependencies": {
+    "@team-hq/api-contract": "workspace:*",
+    "@team-hq/domain": "workspace:*",
     "next": "^15.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
