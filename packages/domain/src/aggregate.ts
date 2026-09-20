@@ -1,9 +1,3 @@
-/**
- * Agent aggregate stubs (PRD §6.2).
- * Priority: blocked > doing > todo > done.
- * Blocked reason summary ≤40 from newest blocked issue.
- */
-
 import type { IssueStatus } from "./status.js";
 
 export type IssueLike = {
@@ -19,15 +13,35 @@ export type AgentAggregate = {
   blockedReasonSummary: string | null;
 };
 
-/**
- * Aggregate issues for an agent/role into a single map label status.
- * Stub: always throws.
- */
-export function aggregateAgentStatus(
-  _issues: IssueLike[],
-  _opts?: { projectSlug?: string },
-): AgentAggregate {
-  throw new Error("not implemented: aggregateAgentStatus (PRD §6.2)");
-}
-
 export const BLOCKED_SUMMARY_MAX = 40;
+
+export function aggregateAgentStatus(
+  issues: IssueLike[],
+  opts?: { projectSlug?: string },
+): AgentAggregate {
+  const filtered = opts?.projectSlug
+    ? issues.filter((i) => i.projectSlug === opts.projectSlug)
+    : issues;
+
+  if (filtered.length === 0) {
+    return { status: "done", blockedReasonSummary: null };
+  }
+
+  const blocked = filtered.filter((i) => i.status === "blocked");
+  if (blocked.length > 0) {
+    const newest = [...blocked].sort((a, b) =>
+      a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0,
+    )[0];
+    const raw = newest.blockedReason ?? "";
+    const summary =
+      raw.length > BLOCKED_SUMMARY_MAX ? raw.slice(0, BLOCKED_SUMMARY_MAX) : raw;
+    return { status: "blocked", blockedReasonSummary: summary || null };
+  }
+  if (filtered.some((i) => i.status === "doing")) {
+    return { status: "doing", blockedReasonSummary: null };
+  }
+  if (filtered.some((i) => i.status === "todo")) {
+    return { status: "todo", blockedReasonSummary: null };
+  }
+  return { status: "done", blockedReasonSummary: null };
+}

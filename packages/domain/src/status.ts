@@ -1,8 +1,3 @@
-/**
- * Status machine stubs (PRD §6.1).
- * Real validation is intentionally NOT implemented — Sprint 0 TDD red gate.
- */
-
 export type IssueStatus = "todo" | "doing" | "blocked" | "done";
 
 export const ALLOWED_STATUSES: readonly IssueStatus[] = [
@@ -22,21 +17,34 @@ export type StatusValidationResult =
       message: string;
     };
 
-/**
- * Validate status + blockedReason pair per PRD §6.1.
- * Stub: always throws — domain logic not implemented yet.
- */
-export function validateStatusAndReason(
-  _status: string,
-  _blockedReason?: string | null,
-): StatusValidationResult {
-  throw new Error("not implemented: validateStatusAndReason (PRD §6.1)");
+export function isAllowedStatus(value: string): boolean {
+  return (ALLOWED_STATUSES as readonly string[]).includes(value);
 }
 
-/**
- * Whether a value is one of the four fixed statuses.
- * Stub: always throws.
- */
-export function isAllowedStatus(_value: string): boolean {
-  throw new Error("not implemented: isAllowedStatus (PRD §6.1)");
+export function validateStatusAndReason(
+  status: string,
+  blockedReason?: string | null,
+): StatusValidationResult {
+  if (!isAllowedStatus(status)) {
+    return { ok: false, code: "INVALID_STATUS", message: `Invalid status: ${status}` };
+  }
+  const s = status as IssueStatus;
+  if (s !== "blocked") {
+    return { ok: true, status: s, blockedReason: null };
+  }
+  if (blockedReason == null || blockedReason.trim().length === 0) {
+    return {
+      ok: false,
+      code: "BLOCKED_REASON_REQUIRED",
+      message: "blocked requires non-empty blockedReason",
+    };
+  }
+  if (blockedReason.length > BLOCKED_REASON_MAX) {
+    return {
+      ok: false,
+      code: "BLOCKED_REASON_TOO_LONG",
+      message: `blockedReason must be ≤ ${BLOCKED_REASON_MAX}`,
+    };
+  }
+  return { ok: true, status: "blocked", blockedReason: blockedReason.trim() };
 }

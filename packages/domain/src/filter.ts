@@ -1,9 +1,3 @@
-/**
- * Filter State stubs (PRD §N.3).
- * projectId / agentId / status / query persist across Office⇄Linear⇄Project⇄Board.
- * Clear only on explicit clear.
- */
-
 export type ViewId = "office" | "linear" | "project" | "board";
 
 export type FilterState = {
@@ -20,16 +14,26 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   query: "",
 };
 
-/**
- * Shared filter store across views. Stub: not a real shared store.
- */
 export function createFilterStore(): {
   getState: () => FilterState;
   setState: (partial: Partial<FilterState>) => void;
   clear: () => void;
-  /** Switch active view without resetting filters */
   switchView: (view: ViewId) => void;
   getView: () => ViewId;
 } {
-  throw new Error("not implemented: createFilterStore (PRD §N.3)");
+  let state: FilterState = { ...DEFAULT_FILTER_STATE };
+  let view: ViewId = "office";
+  return {
+    getState: () => ({ ...state }),
+    setState: (partial) => {
+      state = { ...state, ...partial };
+    },
+    clear: () => {
+      state = { ...DEFAULT_FILTER_STATE };
+    },
+    switchView: (next) => {
+      view = next;
+    },
+    getView: () => view,
+  };
 }

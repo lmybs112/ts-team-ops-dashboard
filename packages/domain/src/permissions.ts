@@ -1,14 +1,8 @@
-/**
- * Permissions stubs (PRD §6.3).
- * mei / cto: full; bot: only own assigneeRole; unauthorized: reject.
- */
-
 export type ActorKind = "human" | "bot" | "unauthenticated";
 
 export type Actor = {
   actorId: string;
   kind: ActorKind;
-  /** For bots: their roleId. mei/cto are full-access humans. */
   roleId?: string;
 };
 
@@ -23,14 +17,30 @@ export type PermissionDecision =
   | { allowed: true }
   | { allowed: false; code: "UNAUTHENTICATED" | "FORBIDDEN_ASSIGNEE" | "FORBIDDEN_OPERATION" };
 
-/**
- * Decide whether actor may perform action on a target issue.
- * Stub: always throws.
- */
+function isFullAccess(actor: Actor): boolean {
+  return (
+    actor.kind === "human" &&
+    (actor.actorId === "mei" || actor.actorId === "cto" || actor.roleId === "cto")
+  );
+}
+
 export function authorize(
-  _actor: Actor | null,
-  _action: PermissionAction,
-  _target?: { assigneeRole?: string },
+  actor: Actor | null,
+  action: PermissionAction,
+  target?: { assigneeRole?: string },
 ): PermissionDecision {
-  throw new Error("not implemented: authorize (PRD §6.3)");
+  if (actor == null || actor.kind === "unauthenticated") {
+    return { allowed: false, code: "UNAUTHENTICATED" };
+  }
+  if (isFullAccess(actor)) return { allowed: true };
+  if (actor.kind !== "bot") {
+    return { allowed: false, code: "FORBIDDEN_OPERATION" };
+  }
+  if (action === "create" || action === "delete" || action === "reassign") {
+    return { allowed: false, code: "FORBIDDEN_OPERATION" };
+  }
+  if (target?.assigneeRole != null && target.assigneeRole !== actor.roleId) {
+    return { allowed: false, code: "FORBIDDEN_ASSIGNEE" };
+  }
+  return { allowed: true };
 }
