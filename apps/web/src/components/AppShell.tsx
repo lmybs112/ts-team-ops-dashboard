@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { ActorSelector } from "./ActorSelector";
 import { FilterBar } from "./FilterBar";
 import { ViewSwitcher } from "./ViewSwitcher";
 
@@ -16,7 +17,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="muted">Office ∥ Linear</span>
         </div>
         <ViewSwitcher />
-        <FilterBar />
+        <div className="header-tools">
+          <ActorSelector />
+          <FilterBar />
+        </div>
       </header>
       <main id="main-content" className="app-main" tabIndex={-1}>
         {children}
