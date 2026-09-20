@@ -124,17 +124,35 @@ function validateBlocked(
   return null;
 }
 
-export function createOpsApi(): OpsApi {
+export type CreateOpsApiOptions = {
+  /** Hydrate from durable store (e.g. SQLite) on boot. */
+  initialIssues?: readonly Issue[];
+};
+
+export function createOpsApi(options: CreateOpsApiOptions = {}): OpsApi {
   const db = new Map<string, Issue>();
   const idempotency = new Map<string, string>();
   let seq = 1;
 
+  const remember = (issue: Issue) => {
+    db.set(issue.id, { ...issue });
+    if (issue.sourceRef) {
+      idempotency.set(`${issue.source}:${issue.sourceRef}`, issue.id);
+    }
+    const m = /(\d+)$/.exec(issue.id);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isFinite(n) && n >= seq) seq = n + 1;
+    }
+  };
+
+  for (const issue of options.initialIssues ?? []) {
+    remember(issue);
+  }
+
   return {
     seedIssue(issue) {
-      db.set(issue.id, { ...issue });
-      if (issue.sourceRef) {
-        idempotency.set(`${issue.source}:${issue.sourceRef}`, issue.id);
-      }
+      remember(issue);
     },
     listIssues() {
       return Array.from(db.values());

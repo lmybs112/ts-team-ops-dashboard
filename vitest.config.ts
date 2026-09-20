@@ -7,6 +7,7 @@ export default defineConfig({
       "packages/**/tests/**/*.test.ts",
       "apps/web/**/*.test.ts",
       "apps/web/**/*.test.tsx",
+      "apps/api/**/*.test.ts",
     ],
     environment: "node",
     reporters: ["default"],

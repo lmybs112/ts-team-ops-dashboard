@@ -2,13 +2,15 @@
   "name": "ts-team-ops-dashboard",
   "private": true,
   "version": "0.0.0",
-  "description": "Team HQ monorepo — Sprint 0 TDD red scaffold",
+  "description": "Team HQ monorepo \u2014 Sprint 0 TDD red scaffold",
   "packageManager": "pnpm@12.5.1",
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
     "test:unit": "vitest run",
-    "typecheck": "tsc -b --pretty false"
+    "typecheck": "tsc -b --pretty false",
+    "dev:api": "pnpm --filter @team-hq/api dev",
+    "start:api": "OPS_ALLOW_TEST_TOKENS=1 pnpm --filter @team-hq/api start"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
