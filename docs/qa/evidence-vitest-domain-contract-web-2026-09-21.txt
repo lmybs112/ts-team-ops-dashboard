@@ -1,0 +1,82 @@
+
+ RUN  v3.2.7 /workspace/ts-team-ops-dashboard
+
+ ✓ packages/domain/src/ingest.test.ts > PRD §6.4 Ingest contract > accepts a well-shaped payload 1ms
+ ✓ packages/domain/src/ingest.test.ts > PRD §6.4 Ingest contract > idempotency key is source + sourceRef 0ms
+ ✓ packages/domain/src/ingest.test.ts > PRD §6.4 Ingest contract > blocked without reason → 400 BLOCKED_REASON_REQUIRED 0ms
+ ✓ packages/domain/src/ingest.test.ts > PRD §6.4 Ingest contract > illegal projectSlug → 400 INVALID_ENUM 0ms
+ ✓ packages/domain/src/ingest.test.ts > PRD §6.4 Ingest contract > illegal assigneeRole → 400 INVALID_ENUM 0ms
+ ✓ packages/domain/src/ingest.test.ts > PRD §6.4 Ingest contract > missing source or sourceRef → 400 IDEMPOTENCY_KEY_REQUIRED 0ms
+ ✓ packages/domain/src/ingest.test.ts > PRD §6.4 Ingest contract > github source → 400 SOURCE_NOT_ALLOWED (MVP) 0ms
+ ✓ packages/domain/src/filter.test.ts > PRD §N.3 Filter State across Office⇄Linear⇄Project⇄Board > starts with defaults (all / empty query) 1ms
+ ✓ packages/domain/src/filter.test.ts > PRD §N.3 Filter State across Office⇄Linear⇄Project⇄Board > persists filters when switching Office → Linear → Project → Board 1ms
+ ✓ packages/domain/src/filter.test.ts > PRD §N.3 Filter State across Office⇄Linear⇄Project⇄Board > entering project writes projectId and keeps it after leaving 0ms
+ ✓ packages/domain/src/filter.test.ts > PRD §N.3 Filter State across Office⇄Linear⇄Project⇄Board > Office click agent sets agentId; Linear still filtered 0ms
+ ✓ packages/domain/src/filter.test.ts > PRD §N.3 Filter State across Office⇄Linear⇄Project⇄Board > clears only on explicit clear() 0ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > allows only todo|doing|blocked|done 2ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > accepts non-blocked statuses without reason 1ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > requires non-empty blockedReason when status=blocked 0ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > rejects empty blockedReason for blocked 0ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > rejects whitespace-only blockedReason for blocked 0ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > rejects null/undefined blockedReason for blocked 0ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > rejects blockedReason longer than 120 chars 0ms
+ ✓ packages/domain/src/status.test.ts > PRD §6.1 Status + blockedReason > rejects unknown status values 0ms
+ ✓ apps/web/src/lib/filter-issues.test.ts > filterIssues (client-side, driven by Filter State) > returns all when filters are defaults 2ms
+ ✓ apps/web/src/lib/filter-issues.test.ts > filterIssues (client-side, driven by Filter State) > filters by projectId, agentId, status, and query together 1ms
+ ✓ apps/web/src/lib/filter-issues.test.ts > filterIssues (client-side, driven by Filter State) > matches query case-insensitively on title 0ms
+ ✓ apps/web/src/filters/react-filter-store.test.ts > web Filter shell — shared Filter State across Office⇄Linear > starts with domain defaults and office view 2ms
+ ✓ apps/web/src/filters/react-filter-store.test.ts > web Filter shell — shared Filter State across Office⇄Linear > keeps projectId / agentId / status / query when switching Office → Linear 0ms
+ ✓ apps/web/src/filters/react-filter-store.test.ts > web Filter shell — shared Filter State across Office⇄Linear > keeps filters when switching Linear → Office (round-trip) 0ms
+ ✓ apps/web/src/filters/react-filter-store.test.ts > web Filter shell — shared Filter State across Office⇄Linear > clears filters only on explicit clear(), not on switchView 0ms
+ ✓ apps/web/src/filters/react-filter-store.test.ts > web Filter shell — shared Filter State across Office⇄Linear > view switcher updates view id without resetting filters 0ms
+ ✓ apps/web/src/filters/react-filter-store.test.ts > web Filter shell — shared Filter State across Office⇄Linear > notifies subscribers on setState / switchView / clear 1ms
+ ✓ apps/web/src/lib/office-scene.test.ts > office scene — role ↔ cat asset id > maps frontend → fe and backend → be for asset filenames 2ms
+ ✓ apps/web/src/lib/office-scene.test.ts > office scene — role ↔ cat asset id > maps fe/be asset ids back to domain roles 0ms
+ ✓ apps/web/src/lib/office-scene.test.ts > office scene — role ↔ cat asset id > builds public cat image paths with prototype stems 0ms
+ ✓ apps/web/src/lib/office-scene.test.ts > office scene — role ↔ cat asset id > exposes seven hotspots with prototype percent layout 2ms
+ ✓ apps/web/src/lib/office-scene.test.ts > office scene — hotspot / drawer Filter State > hotspot click sets agentId (opens drawer) 0ms
+ ✓ apps/web/src/lib/office-scene.test.ts > office scene — hotspot / drawer Filter State > closing drawer clears agentId to all 0ms
+ ✓ apps/web/src/lib/office-scene.test.ts > office scene — hotspot / drawer Filter State > selecting hotspot updates shared filter store agentId 1ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P1 | mei POST /issues 合法 → 201 3ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P2 | frontend bot POST /issues → 403 FORBIDDEN_OPERATION 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P3 | frontend bot PATCH 自己的 Issue → blocked + reason → 200 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P4 | frontend bot PATCH 自己的 Issue → blocked 無 reason → 400；DB 不變 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P5 | frontend bot PATCH backend 的 Issue → 403 FORBIDDEN_ASSIGNEE；DB 不變 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P6 | frontend bot PATCH 自己的 Issue 改 assigneeRole=backend → 403 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P7 | ingest 首次（合法）→ 201；idempotentReplay=false 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P8 | ingest 同 source+sourceRef 重送 → 200；同一 issue.id；idempotentReplay=true 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P9 | ingest blocked 無 reason → 400；無列寫入 1ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P10 | S-H1 ingest assigneeRole ≠ token role → 403 FORBIDDEN_ASSIGNEE；DB 不變 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P11 | ingest 非法 projectSlug → 400 INVALID_ENUM 2ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P12 | CTO DELETE Issue → 204 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P13 | bot DELETE → 403 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P14 | S-H1 frontend bot token + body assigneeRole=backend ingest → 403；DB 不變 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P15 | S-H1 frontend bot ingest 合法 → 201/200；寫入 assigneeRole=frontend 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P16 | S-H2 無 Authorization 呼叫 POST /issues → 401 UNAUTHENTICATED 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P17 | S-H2 無 Authorization 呼叫 POST /ingest／PATCH／DELETE → 401 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P18 | S-H2 僅改 UI 假角色、仍用 frontend bot token 打他人任務 → 403 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P19 | FU-H1b 共用神鑰跨 role → 拒絕核發 或 跨 role 寫入 401/403；DB 不變 0ms
+ ✓ packages/api-contract/src/p1-p20.test.ts > permissions-and-errors.md §4 P1–P20 > P20 | FU-H2a 無 Bearer（或 frontend token）+ X-Role: cto → 401 或仍 frontend 權限；不得升權；DB 不變 1ms
+ ✓ packages/domain/src/aggregate.test.ts > PRD §6.2 Agent aggregate (blocked > doing > todo > done) > returns blocked when any issue is blocked 1ms
+ ✓ packages/domain/src/aggregate.test.ts > PRD §6.2 Agent aggregate (blocked > doing > todo > done) > uses newest blocked reason and truncates summary to ≤40 1ms
+ ✓ packages/domain/src/aggregate.test.ts > PRD §6.2 Agent aggregate (blocked > doing > todo > done) > returns doing when no blocked but any doing 0ms
+ ✓ packages/domain/src/aggregate.test.ts > PRD §6.2 Agent aggregate (blocked > doing > todo > done) > returns todo when only todo (and done) 0ms
+ ✓ packages/domain/src/aggregate.test.ts > PRD §6.2 Agent aggregate (blocked > doing > todo > done) > returns done when all done or empty 0ms
+ ✓ packages/domain/src/aggregate.test.ts > PRD §6.2 Agent aggregate (blocked > doing > todo > done) > optionally filters by projectSlug 0ms
+ ✓ packages/domain/src/permissions.test.ts > PRD §6.3 Permissions (mei/cto full; bot own assigneeRole only) > allows mei full CRUD / reassign / ingest 1ms
+ ✓ packages/domain/src/permissions.test.ts > PRD §6.3 Permissions (mei/cto full; bot own assigneeRole only) > allows cto full CRUD / reassign / ingest 0ms
+ ✓ packages/domain/src/permissions.test.ts > PRD §6.3 Permissions (mei/cto full; bot own assigneeRole only) > allows bot to update own assigneeRole issues 0ms
+ ✓ packages/domain/src/permissions.test.ts > PRD §6.3 Permissions (mei/cto full; bot own assigneeRole only) > rejects bot updating another role's issue 0ms
+ ✓ packages/domain/src/permissions.test.ts > PRD §6.3 Permissions (mei/cto full; bot own assigneeRole only) > rejects bot create / delete / reassign 0ms
+ ✓ packages/domain/src/permissions.test.ts > PRD §6.3 Permissions (mei/cto full; bot own assigneeRole only) > rejects unauthenticated writes 0ms
+ ✓ packages/domain/src/permissions.test.ts > PRD §6.3 Permissions (mei/cto full; bot own assigneeRole only) > backend bot cannot update frontend issues 0ms
+ ✓ apps/web/src/lib/a11y-contrast.test.ts > a11y color contracts (office shell) > STATUS_COLOR.done is deep enough for white text (≥ 4.5:1) 1ms
+ ✓ apps/web/src/lib/a11y-contrast.test.ts > a11y color contracts (office shell) > control border gray reaches ≥ 3:1 on white (non-text) 0ms
+
+ Test Files  10 passed (10)
+      Tests  71 passed (71)
+   Start at  05:27:17
+   Duration  638ms (transform 357ms, setup 0ms, collect 730ms, tests 51ms, environment 2ms, prepare 671ms)
+
+
+# QA finalize: 2026-09-21 Asia/Taipei — branch test/e2e-p0-playwright HEAD a5e4a44 (= origin/main); 10 files / 71 tests; product code untouched by QA
