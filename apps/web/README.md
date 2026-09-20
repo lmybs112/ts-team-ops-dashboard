@@ -30,3 +30,12 @@ pnpm test
 - Sober black / white / gray + status colors only
 - In-memory `createOpsApi()` mock — no direct DB from UI
 - Mobile polish deferred; basic layout should not break
+
+## View Office (3D scene)
+
+Desktop (`≥721px`): full-bleed stage from `public/office/scene/office-scene-3d.png` with role hotspots and a side drawer. Cat assets under `public/office/cats/` (prototype `fe`/`be` → domain `frontend`/`backend`). Phone: simplified agent list + drawer.
+
+```bash
+pnpm --filter @team-hq/web dev
+# http://localhost:3000/office — click desk/cat → drawer; Office⇄Linear keeps Filter State
+```
