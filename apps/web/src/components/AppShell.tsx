@@ -7,6 +7,9 @@ import { ViewSwitcher } from "./ViewSwitcher";
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        跳到主要內容
+      </a>
       <header className="app-header">
         <div className="brand">
           <strong>Team HQ</strong>
@@ -15,7 +18,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <ViewSwitcher />
         <FilterBar />
       </header>
-      <main className="app-main">{children}</main>
+      <main id="main-content" className="app-main" tabIndex={-1}>
+        {children}
+      </main>
     </div>
   );
 }
